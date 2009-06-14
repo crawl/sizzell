@@ -59,7 +59,7 @@ my @stonehandles = open_handles(@stonefiles);
 my @loghandles = open_handles(@logfiles);
 
 # We create a new PoCo-IRC object and component.
-my $irc = POE::Component::IRC->spawn( 
+my $irc = POE::Component::IRC->spawn(
       nick    => $nickname,
       server  => $ircserver,
       port    => $port,
@@ -70,6 +70,7 @@ POE::Session->create(
       inline_states => {
         check_files => \&check_files,
         irc_public  => \&irc_public,
+        irc_msg     => \&irc_msg
       },
 
       package_states => [
@@ -91,7 +92,7 @@ sub open_handles
   my @handles;
 
   for my $file (@files) {
-    open my $handle, '<', $file or do { 
+    open my $handle, '<', $file or do {
 	  warn "Unable to open $file for reading: $!";
 	  next;
 	};
@@ -254,16 +255,24 @@ sub irc_255
   $irc->yield(privmsg => "nickserv" => "identify $password");
 }
 
+sub irc_msg {
+  process_irc_message('PRIVATE', @_[KERNEL,SENDER,ARG0,ARG1,ARG2]);
+}
+
 sub irc_public {
-  my ($kernel,$sender,$who,$where,$verbatim) = 
-        @_[KERNEL,SENDER,ARG0,ARG1,ARG2];
+  process_irc_message(0, @_[KERNEL,SENDER,ARG0,ARG1,ARG2]);
+}
+
+sub process_irc_message {
+  my ($private, $kernel,$sender,$who,$where,$verbatim) = @_;
   return unless $kernel && $sender && $who && $where && $verbatim;
 
   my $nick = get_nick($who) or return;
   my $command = get_command($verbatim) or return;
   my $channel = $where->[0] or return;
 
-  process_command($command, $kernel, $sender, $nick, $channel, $verbatim);
+  process_command($private, $command, $kernel, $sender,
+                  $nick, $channel, $verbatim);
 
   undef;
 }
@@ -289,6 +298,7 @@ sub get_command {
 
 sub post_message {
   my ($kernel, $sender, $channel, $msg) = @_;
+  $msg = substr($msg, 0, $MAX_LENGTH) if length($msg) > $MAX_LENGTH;
   $kernel->post($sender => privmsg => $channel => $msg);
 }
 
@@ -296,13 +306,13 @@ sub post_message {
 # Commands
 
 sub process_command {
-  my ($command, $kernel, $sender, $nick, $channel, $verbatim) = @_;
+  my ($private, $command, $kernel, $sender, $nick, $channel, $verbatim) = @_;
   if (substr($command, 0, 2) eq '@?')
   {
 	$command = "@?";
   }
   my $proc = $COMMANDS{$command} or return;
-  &$proc($kernel, $sender, $nick, $channel, $verbatim);
+  &$proc($private, $kernel, $sender, $nick, $channel, $verbatim);
 }
 
 sub find_named_nick {
@@ -313,17 +323,16 @@ sub find_named_nick {
 }
 
 sub cmd_monsterinfo {
-  my ($kernel, $sender, $nick, $channel, $verbatim) = @_;
+  my ($private, $kernel, $sender, $nick, $channel, $verbatim) = @_;
 
   my $monster_name = substr($verbatim, 2);
   my $monster_info = `monster $monster_name`;
-  $monster_info = substr($monster_info, 0, $MAX_LENGTH) if length($monster_info) > $MAX_LENGTH;
-  post_message($kernel, $sender, $channel, $monster_info);
+  post_message($kernel, $sender, $private ? $nick : $channel, $monster_info);
 }
 
 sub cmd_whereis {
-  my ($kernel, $sender, $nick, $channel, $verbatim) = @_;
-  
+  my ($private, $kernel, $sender, $nick, $channel, $verbatim) = @_;
+
   # Get the nick to act on.
   my $realnick = find_named_nick($nick, $verbatim);
   my $where_file;
@@ -343,15 +352,17 @@ sub cmd_whereis {
     }
   }
 
+  my $target = $private ? $nick : $channel;
+
   unless (defined($final_where) && length($final_where) > 0) {
-    post_message($kernel, $sender, $channel,
+    post_message($kernel, $sender, $target,
                  "No where information for $realnick ($final_where).");
     return;
   }
 
   open my $in, '<', $final_where
     or do {
-      post_message($kernel, $sender, $channel, 
+      post_message($kernel, $sender, $target,
                    "Couldn't fetch where information for $realnick.");
       return;
     };
@@ -359,7 +370,7 @@ sub cmd_whereis {
   chomp( my $where = <$in> );
   close $in;
 
-  show_where_information($kernel, $sender, $channel, $where);
+  show_where_information($kernel, $sender, $target, $where);
 }
 
 sub format_crawl_date {
@@ -407,7 +418,7 @@ sub show_where_information {
 
   my $god = $wref{god}? ", a worshipper of $wref{god}," : "";
   unless ($msg) {
-    $msg = "$wref{name} the $wref{title} (L$wref{xl} $wref{char})" . 
+    $msg = "$wref{name} the $wref{title} (L$wref{xl} $wref{char})" .
            "$god$what$preposition$place$date$turn$punctuation";
   }
   post_message($kernel, $sender, $channel, $msg);
@@ -469,7 +480,7 @@ sub demunge_xlogline
   chomp $line;
   die "Unable to handle internal newlines." if $line =~ y/\n//;
   $line =~ s/::/\n\n/g;
-  
+
   while ($line =~ /\G(\w+)=([^:]*)(?::(?=[^:])|$)/cg)
   {
     my ($key, $value) = ($1, $2);
@@ -500,7 +511,7 @@ sub serialize_time
 
     return sprintf "%d:%02d:%02d", $hours, $minutes, $seconds;
   }
-  
+
   my $minutes = int($seconds / 60);
   $seconds %= 60;
   my $hours = int($minutes / 60);
@@ -523,4 +534,3 @@ sub serialize_time
   return join ' ', @fields if @fields;
   return '0s';
 }
-
