@@ -33,16 +33,15 @@ my $port           = 8001;
 my $channel        = '##crawl';
 my @stonefiles     = ('/var/lib/dgamelaunch/crawl-rel/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones',
-                      '/var/lib/dgamelaunch/crawl-old/saves/milestones',
-                      '/var/lib/dgamelaunch/crawl-dd/saves/milestones');
+                      '/var/lib/dgamelaunch/crawl-old/saves/milestones');
 my @logfiles       = ('/var/lib/dgamelaunch/crawl-rel/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile',
-                      '/var/lib/dgamelaunch/crawl-old/saves/logfile',
-                      '/var/lib/dgamelaunch/crawl-dd/saves/logfile');
+                      '/var/lib/dgamelaunch/crawl-old/saves/logfile');
 my @whereis_path   = ('/var/lib/dgamelaunch/crawl-rel/saves/',
                       '/var/lib/dgamelaunch/crawl-svn/saves/',
-                      '/var/lib/dgamelaunch/crawl-old/saves/',
-                      '/var/lib/dgamelaunch/crawl-dd/saves/');
+                      '/var/lib/dgamelaunch/crawl-old/saves/');
+
+my $MAX_LENGTH = 500;
 
 my %COMMANDS = (
   '@whereis' => \&cmd_whereis,
@@ -92,7 +91,10 @@ sub open_handles
   my @handles;
 
   for my $file (@files) {
-    open my $handle, '<', $file or die "Unable to open $file for reading: $!";
+    open my $handle, '<', $file or do { 
+	  warn "Unable to open $file for reading: $!";
+	  next;
+	};
     seek($handle, 0, 2); # EOF
     push @handles, [ $file, $handle, tell($handle) ];
   }
@@ -315,7 +317,7 @@ sub cmd_monsterinfo {
 
   my $monster_name = substr($verbatim, 2);
   my $monster_info = `monster $monster_name`;
-
+  $monster_info = substr($monster_info, 0, $MAX_LENGTH) if length($monster_info) > $MAX_LENGTH;
   post_message($kernel, $sender, $channel, $monster_info);
 }
 
