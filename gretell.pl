@@ -64,6 +64,7 @@ my $irc = POE::Component::IRC->spawn(
       server  => $ircserver,
       port    => $port,
       ircname => $ircname,
+      localaddr => '80.190.48.234',
 ) or die "Oh noooo! $!";
 
 POE::Session->create(
