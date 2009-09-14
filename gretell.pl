@@ -45,6 +45,7 @@ my $MAX_LENGTH = 500;
 
 my %COMMANDS = (
   '@whereis' => \&cmd_whereis,
+  '@??' => \&cmd_trunk_monsterinfo,
   '@?' => \&cmd_monsterinfo,
 );
 
@@ -308,10 +309,16 @@ sub post_message {
 
 sub process_command {
   my ($private, $command, $kernel, $sender, $nick, $channel, $verbatim) = @_;
-  if (substr($command, 0, 2) eq '@?')
+
+  if (substr($command, 0, 3) eq '@??')
+  {
+    $command = "@??";
+  }
+  elsif (substr($command, 0, 2) eq '@?')
   {
 	$command = "@?";
   }
+
   my $proc = $COMMANDS{$command} or return;
   &$proc($private, $kernel, $sender, $nick, $channel, $verbatim);
 }
@@ -323,10 +330,25 @@ sub find_named_nick {
   return sanitise_nick($named) || $default;
 }
 
+sub make_shellsafe($) {
+  my $thing = shift;
+  # Toss out everything that might confuse the shell. Spaces are ok,
+  # quotes are not.
+  $thing =~ tr/a-zA-Z0-9_+ -//cd;
+  return $thing;
+}
+
+sub cmd_trunk_monsterinfo {
+  my ($private, $kernel, $sender, $nick, $channel, $verbatim) = @_;
+  my $monster_name = make_shellsafe(substr($verbatim, 3));
+  my $monster_info = qx/monster-trunk '$monster_name'/;
+  post_message($kernel, $sender, $private ? $nick : $channel, $monster_info);
+}
+
 sub cmd_monsterinfo {
   my ($private, $kernel, $sender, $nick, $channel, $verbatim) = @_;
 
-  my $monster_name = substr($verbatim, 2);
+  my $monster_name = make_shellsafe(substr($verbatim, 2));
   my $monster_info = `monster $monster_name`;
   post_message($kernel, $sender, $private ? $nick : $channel, $monster_info);
 }
