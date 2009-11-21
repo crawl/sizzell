@@ -33,15 +33,16 @@ my $ircserver      = 'kornbluth.freenode.net';
 # my $ircserver      = 'pratchett.freenode.net';
 my $port           = 8001;
 my $channel        = '##crawl';
+
 my @stonefiles     = ('/var/lib/dgamelaunch/crawl-rel/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-old/saves/milestones');
 my @logfiles       = ('/var/lib/dgamelaunch/crawl-rel/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-old/saves/logfile');
-my @whereis_path   = ('/var/lib/dgamelaunch/crawl-rel/saves/',
-                      '/var/lib/dgamelaunch/crawl-svn/saves/',
-                      '/var/lib/dgamelaunch/crawl-old/saves/');
+
+my @crawldirs      = glob('/var/lib/dgamelaunch/crawl-*');
+my @whereis_path   = map { "$_/saves/" } @crawldirs;
 
 my $MAX_LENGTH = 500;
 
