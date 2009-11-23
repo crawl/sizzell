@@ -41,9 +41,6 @@ my @logfiles       = ('/var/lib/dgamelaunch/crawl-rel/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-old/saves/logfile');
 
-my @crawldirs      = glob('/var/lib/dgamelaunch/crawl-*');
-my @whereis_path   = map { "$_/saves/" } @crawldirs;
-
 my $MAX_LENGTH = 500;
 
 my %COMMANDS = (
@@ -358,6 +355,9 @@ sub cmd_monsterinfo {
 
 sub cmd_whereis {
   my ($private, $kernel, $sender, $nick, $channel, $verbatim) = @_;
+
+  my @crawldirs      = glob('/var/lib/dgamelaunch/crawl-*');
+  my @whereis_path   = map { "$_/saves/" } @crawldirs;
 
   # Get the nick to act on.
   my $realnick = find_named_nick($nick, $verbatim);
