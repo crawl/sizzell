@@ -141,7 +141,7 @@ sub parse_milestone_file
   return unless newsworthy($game_ref);
 
   my $placestring = " ($game_ref->{place})";
-  if ($game_ref->{milestone} eq "escaped from the Abyss!")
+  if ($game_ref->{milestone} eq "escaped from the Abyss!" || $game_ref->{milestone} eq "reached level 27 of the Dungeon.")
   {
     $placestring = "";
   }
