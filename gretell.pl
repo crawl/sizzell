@@ -32,7 +32,8 @@ my $ircserver      = 'kornbluth.freenode.net';
 # my $ircserver      = 'bartol.freenode.net';
 # my $ircserver      = 'pratchett.freenode.net';
 my $port           = 8001;
-my $channel        = '##crawl';
+my @CHANNELS       = ('##crawl', '##crawl-dev');
+my $ANNOUNCE_CHAN  = '##crawl';
 
 my @stonefiles     = ('/var/lib/dgamelaunch/crawl-rel/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones',
@@ -146,7 +147,7 @@ sub parse_milestone_file
     $placestring = "";
   }
 
-  $irc->yield(privmsg => $channel =>
+  $irc->yield(privmsg => $ANNOUNCE_CHAN =>
     sprintf "%s (L%s %s) %s%s",
       $game_ref->{name},
       $game_ref->{xl},
@@ -176,7 +177,7 @@ sub parse_log_file
   {
     my $output = pretty_print($game_ref);
     $output =~ s/ on \d{4}-\d{2}-\d{2}//;
-    $irc->yield(privmsg => $channel => $output);
+    $irc->yield(privmsg => $ANNOUNCE_CHAN => $output);
   }
   seek($loghandle, $href->[2], 0);
 }
@@ -242,7 +243,9 @@ sub irc_001
   print "Connected to ", $poco_object->server_name(), "\n";
 
   # In any irc_* events SENDER will be the PoCo-IRC session
-  $kernel->post( $sender => join => $channel );
+  for my $channel (@CHANNELS) {
+    $kernel->post( $sender => join => $channel );
+  }
   undef;
 }
 
