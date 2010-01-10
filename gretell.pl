@@ -113,10 +113,10 @@ sub newsworthy
     if $stone_ref->{type} eq 'enter'
       and grep {$stone_ref->{br} eq $_} qw/Temple/;
 
-  return 0
-    if $stone_ref->{type} eq 'unique'
-      and grep {index($stone_ref->{milestone}, $_) > -1}
-        qw/Terence Jessica Blork Edmund Psyche Donald Snorg Michael/;
+  #return 0
+  #  if $stone_ref->{type} eq 'unique'
+  #    and grep {index($stone_ref->{milestone}, $_) > -1}
+  #      qw/Terence Jessica Blork Edmund Psyche Donald Snorg Michael/;
 
   return 1;
 }
