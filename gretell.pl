@@ -253,7 +253,7 @@ sub irc_255
 {
   $_[KERNEL]->yield("check_files");
 
-  open(my $handle, '<', 'password') or warn "Unable to read password: $!";
+  open(my $handle, '<', '.password') or warn "Unable to read .password: $!";
   my $password = <$handle>;
   chomp $password;
 
