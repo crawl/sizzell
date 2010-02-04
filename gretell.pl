@@ -28,7 +28,8 @@ use POSIX qw(setsid); # For daemonization.
 
 my $nickname       = 'Gretell';
 my $ircname        = 'Gretell the Crawl Bot';
-my $ircserver      = 'kornbluth.freenode.net';
+my $ircserver      = 'barjavel.freenode.net';
+# my $ircserver      = 'kornbluth.freenode.net';
 # my $ircserver      = 'bartol.freenode.net';
 # my $ircserver      = 'pratchett.freenode.net';
 my $port           = 8001;
