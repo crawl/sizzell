@@ -25,6 +25,7 @@ use warnings;
 
 use POE qw(Component::IRC);
 use POSIX qw(setsid); # For daemonization.
+use File::Find;
 
 my $nickname       = 'Gretell';
 my $ircname        = 'Gretell the Crawl Bot';
@@ -43,10 +44,16 @@ my @logfiles       = ('/var/lib/dgamelaunch/crawl-rel/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-old/saves/logfile');
 
-my $MAX_LENGTH = 500;
+my $DGL_INPROGRESS_DIR    = '/var/lib/dgamelaunch/dgldir/inprogress';
+my $DGL_TTYREC_DIR        = '/var/lib/dgamelaunch/dgldir/ttyrec';
+my $INACTIVE_IDLE_CEILING_SECONDS = 300;
+
+my $MAX_LENGTH = 450;
 
 my %COMMANDS = (
   '@whereis' => \&cmd_whereis,
+  '!cdo'     => \&cmd_players,
+  '@players' => \&cmd_players,
   '@??' => \&cmd_trunk_monsterinfo,
   '@?' => \&cmd_monsterinfo,
 );
@@ -357,14 +364,97 @@ sub cmd_monsterinfo {
   post_message($kernel, $sender, $private ? $nick : $channel, $monster_info);
 }
 
-sub cmd_whereis {
-  my ($private, $kernel, $sender, $nick, $channel, $verbatim) = @_;
+sub ttyrec_idle_time_seconds($) {
+  my $filename = shift;
+  my ($player, $ttyrec) = $filename =~ m{.*/([^:]+):(.*)$};
+  $filename = "$DGL_TTYREC_DIR/$player/$ttyrec" if $player && $ttyrec;
+  my $modtime = (stat $filename)[9];
+  return time() - $modtime;
+}
 
+sub active_player_hash($$) {
+  my ($player_name, $ttyrec_filename) = @_;
+  return { player_name => $player_name,
+           idle_seconds => ttyrec_idle_time_seconds($ttyrec_filename)
+         };
+}
+
+sub find_active_players {
+  my @player_where_list;
+  find(sub {
+         my $filename = $File::Find::name;
+         if (-f $filename && $filename =~ /\.ttyrec$/) {
+           my ($game_version, $player_name) =
+             $filename =~ m{.*/([^/]+)/(.*?):};
+           if ($game_version && $player_name) {
+             push @player_where_list,
+               active_player_hash($player_name, $filename);
+           }
+         }
+       },
+       $DGL_INPROGRESS_DIR);
+
+  return @player_where_list;
+}
+
+sub compare_player_where_infos($$) {
+  my ($wa, $wb) = @_;
+  my $axl = $$wa{where}{xl} || 0;
+  my $bxl = $$wb{where}{xl} || 0;
+  return $axl != $bxl? $bxl - $axl :
+         ($$wa{player_name} cmp $$wb{player_name});
+}
+
+sub sort_active_player_where_infos(@) {
+  return sort { compare_player_where_infos($a, $b) } @_;
+}
+
+sub player_where_stats($) {
+  my $wr = shift;
+  return '' unless $wr;
+  return "L$$wr{xl} @ $$wr{place}, T:$$wr{turn}";
+}
+
+sub player_where_brief($) {
+  my $wref = shift;
+  my $extended = player_where_stats($$wref{where}) || '';
+  $extended = " ($extended)" if $extended;
+  return "$$wref{player_name}$extended";
+}
+
+sub get_active_players_line($) {
+  my $check_not_idle = shift;
+  my @active_players = find_active_players();
+  # If the command wanted active players, toss the idle layabouts.
+  if ($check_not_idle) {
+    @active_players =
+      grep($$_{idle_seconds} < $INACTIVE_IDLE_CEILING_SECONDS,
+           @active_players);
+  }
+  for my $r_player_info_hash (@active_players) {
+    player_whereis_add_info($r_player_info_hash);
+  }
+  my @sorted_players = sort_active_player_where_infos(@active_players);
+  my $message = join(", ", map(player_where_brief($_), @sorted_players));
+  unless ($message) {
+    my $qualifier = $check_not_idle? "active " : "";
+    $message = "No ${qualifier}players.";
+  }
+  return $message;
+}
+
+sub cmd_players {
+  my ($private, $kernel, $sender, $nick, $channel, $verbatim) = @_;
+  my $check_not_idle = $verbatim =~ /-a/;
+  my $message = active_players_line($check_not_idle);
+  post_message($kernel, $sender, $private ? $nick : $channel, $message);
+}
+
+sub player_whereis_line($) {
+  my $realnick = shift;
   my @crawldirs      = glob('/var/lib/dgamelaunch/crawl-*');
   my @whereis_path   = map { "$_/saves/" } @crawldirs;
 
-  # Get the nick to act on.
-  my $realnick = find_named_nick($nick, $verbatim);
   my $where_file;
   my $final_where;
 
@@ -382,24 +472,40 @@ sub cmd_whereis {
     }
   }
 
-  my $target = $private ? $nick : $channel;
-
   unless (defined($final_where) && length($final_where) > 0) {
-    post_message($kernel, $sender, $target,
-                 "No where information for $realnick ($final_where).");
-    return;
+    return undef;
   }
 
-  open my $in, '<', $final_where
-    or do {
-      post_message($kernel, $sender, $target,
-                   "Couldn't fetch where information for $realnick.");
-      return;
-    };
-
+  open my $in, '<', $final_where or return undef;
   chomp( my $where = <$in> );
   close $in;
 
+  return $where;
+}
+
+sub player_whereis_hash($) {
+  my $nick = shift;
+  my $line = player_whereis_line($nick);
+  return $line ? demunge_xlogline($line) : undef;
+}
+
+sub player_whereis_add_info($) {
+  my $phash = shift;
+  $$phash{where} = player_whereis_hash($$phash{player_name});
+}
+
+sub cmd_whereis {
+  my ($private, $kernel, $sender, $nick, $channel, $verbatim) = @_;
+
+  # Get the nick to act on.
+  my $realnick = find_named_nick($nick, $verbatim);
+  my $where = player_whereis_hash($realnick);
+  my $target = $private ? $nick : $channel;
+  unless ($where) {
+    post_message($kernel, $sender, $target,
+                 "No where information for $realnick.");
+    return;
+  }
   show_where_information($kernel, $sender, $target, $where);
 }
 
@@ -413,8 +519,7 @@ sub format_crawl_date {
 }
 
 sub show_where_information {
-  my ($kernel, $sender, $channel, $where) = @_;
-  my $wref = demunge_xlogline($where);
+  my ($kernel, $sender, $channel, $wref) = @_;
   return unless $wref;
 
   my %wref = %$wref;
