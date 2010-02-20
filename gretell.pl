@@ -446,7 +446,7 @@ sub get_active_players_line($) {
 sub cmd_players {
   my ($private, $kernel, $sender, $nick, $channel, $verbatim) = @_;
   my $check_not_idle = $verbatim =~ /-a/;
-  my $message = active_players_line($check_not_idle);
+  my $message = get_active_players_line($check_not_idle);
   post_message($kernel, $sender, $private ? $nick : $channel, $message);
 }
 
