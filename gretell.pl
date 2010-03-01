@@ -125,7 +125,8 @@ sub newsworthy
 
   # Suppress all Sprint events <300 turns.
   return 0
-    if $g->{lv} =~ 'sprint' && $$g{ktyp} ne 'winning' && $$g{turn} < 300;
+    if $g->{lv} =~ 'sprint' && ($$g{ktyp} || '') ne 'winning'
+      && $$g{turn} < 300;
 
   return 0
     if $g->{lv} =~ 'sprint'
