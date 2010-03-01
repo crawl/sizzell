@@ -132,6 +132,22 @@ sub newsworthy
   return 1;
 }
 
+# Given an xlogfile hash, returns the place where the event occurred.
+sub xlog_place
+{
+  my $g = shift;
+  my $sprint = $$g{lv} =~ /sprint/i;
+  my $place = $$g{place};
+  if ($sprint) {
+    if ($place eq 'D:1') {
+      $place = 'Sprint';
+    } else {
+      $place = "$place (Sprint)";
+    }
+  }
+  return $place;
+}
+
 sub parse_milestone_file
 {
   my $href = shift;
@@ -152,7 +168,8 @@ sub parse_milestone_file
 
   return unless newsworthy($game_ref);
 
-  my $placestring = " ($game_ref->{place})";
+  my $place = xlog_place($game_ref);
+  my $placestring = " ($place)";
   if ($game_ref->{milestone} eq "escaped from the Abyss!" || $game_ref->{milestone} eq "reached level 27 of the Dungeon.")
   {
     $placestring = "";
@@ -415,7 +432,8 @@ sub sort_active_player_where_infos(@) {
 sub player_where_stats($) {
   my $wr = shift;
   return '' unless $wr;
-  return "L$$wr{xl} @ $$wr{place}, T:$$wr{turn}";
+  my $place = xlog_place($wr);
+  return "L$$wr{xl} @ $place, T:$$wr{turn}";
 }
 
 sub player_where_brief($) {
@@ -527,9 +545,9 @@ sub show_where_information {
 
   my %wref = %$wref;
 
-  my $place = $wref{place};
+  my $place = xlog_place($wref);
   my $preposition = index($place, ':') != -1? " on" : " in";
-  $place = "the $place" if $place eq 'Abyss' || $place eq 'Temple';
+  $place = "the $place" if $place =~ 'Abyss' || $place eq 'Temple';
   $place = " $place";
 
   my $punctuation = '.';
@@ -570,19 +588,20 @@ sub pretty_print
   my $game_ref = shift;
 
   my $loc_string = "";
+  my $place = xlog_place($game_ref);
   if ($game_ref->{ltyp} ne 'D')
   {
-    $loc_string = " in $game_ref->{place}";
+    $loc_string = " in $place";
   }
   else
   {
     if ($game_ref->{br} eq 'blade' or $game_ref->{br} eq 'temple' or $game_ref->{br} eq 'hell')
     {
-      $loc_string = " in $game_ref->{place}";
+      $loc_string = " in $place";
     }
     else
     {
-      $loc_string = " on $game_ref->{place}";
+      $loc_string = " on $place";
     }
   }
   $loc_string = "" # For escapes of the dungeon, so it doesn't print the loc
