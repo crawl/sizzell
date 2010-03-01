@@ -117,17 +117,28 @@ sub open_handles
 
 sub newsworthy
 {
-  my $stone_ref = shift;
+  my $g = shift;
 
   return 0
-    if $stone_ref->{type} eq 'enter'
-      and grep {$stone_ref->{br} eq $_} qw/Temple/;
+    if $g->{type} eq 'enter'
+      and grep {$g->{br} eq $_} qw/Temple/;
+
+  # Suppress all Sprint events <300 turns.
+  return 0
+    if $g->{lv} =~ 'sprint' && $$g{ktyp} ne 'winning' && $$g{turn} < 300;
 
   return 0
-    if $stone_ref->{lv} eq '0.1-sprint.1'
-      and $stone_ref->{type} eq 'uniq'
-        and grep {index($stone_ref->{milestone}, $_) > -1}
-          qw/Ijyb Sigmund Sonja/;
+    if $g->{lv} =~ 'sprint'
+      and $g->{type} eq 'uniq'
+        and (grep {index($g->{milestone}, $_) > -1}
+             qw/Ijyb Sigmund Sonja/);
+
+  return 0
+    if (!$$g{milestone}
+        && ($g->{sc} <= 2000
+            && ($g->{ktyp} eq 'quitting'
+                || $g->{ktyp} eq 'leaving'
+                || $g->{turn} <= 30)));
 
   return 1;
 }
@@ -166,23 +177,24 @@ sub parse_milestone_file
 
   my $game_ref = demunge_xlogline($line);
 
-  return unless newsworthy($game_ref);
+  if (newsworthy($game_ref)) {
+    my $place = xlog_place($game_ref);
+    my $placestring = " ($place)";
+    if ($game_ref->{milestone} eq "escaped from the Abyss!"
+        || $game_ref->{milestone} eq "reached level 27 of the Dungeon.")
+    {
+      $placestring = "";
+    }
 
-  my $place = xlog_place($game_ref);
-  my $placestring = " ($place)";
-  if ($game_ref->{milestone} eq "escaped from the Abyss!" || $game_ref->{milestone} eq "reached level 27 of the Dungeon.")
-  {
-    $placestring = "";
+    $irc->yield(privmsg => $ANNOUNCE_CHAN =>
+                sprintf "%s (L%s %s) %s%s",
+                $game_ref->{name},
+                $game_ref->{xl},
+                $game_ref->{char},
+                $game_ref->{milestone},
+                $placestring
+               );
   }
-
-  $irc->yield(privmsg => $ANNOUNCE_CHAN =>
-    sprintf "%s (L%s %s) %s%s",
-      $game_ref->{name},
-      $game_ref->{xl},
-      $game_ref->{char},
-      $game_ref->{milestone},
-      $placestring
-  );
 
   seek($stonehandle, $href->[2], 0);
 }
@@ -200,9 +212,9 @@ sub parse_log_file
   }
   $href->[2] = tell($loghandle);
   return unless defined($line) && $line =~ /\S/;
+
   my $game_ref = demunge_xlogline($line);
-  if ($game_ref->{sc} > 2000 || ($game_ref->{ktyp} ne 'quitting' && $game_ref->{ktyp} ne 'leaving' && $game_ref->{turn} >= 30))
-  {
+  if (newsworthy($game_ref)) {
     my $output = pretty_print($game_ref);
     $output =~ s/ on \d{4}-\d{2}-\d{2}//;
     $irc->yield(privmsg => $ANNOUNCE_CHAN => $output);
