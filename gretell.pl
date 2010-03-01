@@ -589,7 +589,7 @@ sub pretty_print
 
   my $loc_string = "";
   my $place = xlog_place($game_ref);
-  if ($game_ref->{ltyp} ne 'D')
+  if ($game_ref->{ltyp} ne 'D' || $place !~ ':')
   {
     $loc_string = " in $place";
   }
