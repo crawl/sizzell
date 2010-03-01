@@ -29,8 +29,8 @@ use File::Find;
 
 my $nickname       = 'Gretell';
 my $ircname        = 'Gretell the Crawl Bot';
-my $ircserver      = 'barjavel.freenode.net';
-# my $ircserver      = 'kornbluth.freenode.net';
+# my $ircserver      = 'barjavel.freenode.net';
+my $ircserver      = 'kornbluth.freenode.net';
 # my $ircserver      = 'bartol.freenode.net';
 # my $ircserver      = 'pratchett.freenode.net';
 my $port           = 8001;
@@ -39,10 +39,12 @@ my $ANNOUNCE_CHAN  = '##crawl';
 
 my @stonefiles     = ('/var/lib/dgamelaunch/crawl-rel/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones',
-                      '/var/lib/dgamelaunch/crawl-old/saves/milestones');
+                      '/var/lib/dgamelaunch/crawl-old/saves/milestones',
+                      '/var/lib/dgamelaunch/crawl-spr/saves/milestones');
 my @logfiles       = ('/var/lib/dgamelaunch/crawl-rel/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile',
-                      '/var/lib/dgamelaunch/crawl-old/saves/logfile');
+                      '/var/lib/dgamelaunch/crawl-old/saves/logfile',
+                      '/var/lib/dgamelaunch/crawl-spr/saves/logfile');
 
 my $DGL_INPROGRESS_DIR    = '/var/lib/dgamelaunch/dgldir/inprogress';
 my $DGL_TTYREC_DIR        = '/var/lib/dgamelaunch/dgldir/ttyrec';
@@ -121,10 +123,11 @@ sub newsworthy
     if $stone_ref->{type} eq 'enter'
       and grep {$stone_ref->{br} eq $_} qw/Temple/;
 
-  #return 0
-  #  if $stone_ref->{type} eq 'unique'
-  #    and grep {index($stone_ref->{milestone}, $_) > -1}
-  #      qw/Terence Jessica Blork Edmund Psyche Donald Snorg Michael/;
+  return 0
+    if $stone_ref->{lv} eq '0.1-sprint.1'
+      and $stone_ref->{type} eq 'uniq'
+        and grep {index($stone_ref->{milestone}, $_) > -1}
+          qw/Ijyb Sigmund Sonja/;
 
   return 1;
 }
