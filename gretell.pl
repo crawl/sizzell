@@ -119,8 +119,11 @@ sub newsworthy
 {
   my $g = shift;
 
+  # Milestone type, empty if this is not a milestone.
+  my $type = $$g{type} || '';
+
   return 0
-    if $g->{type} eq 'enter'
+    if ($type eq 'enter' || $type eq 'br.enter')
       and grep {$g->{br} eq $_} qw/Temple/;
 
   # Suppress all Sprint events <300 turns.
@@ -130,7 +133,7 @@ sub newsworthy
 
   return 0
     if $g->{lv} =~ 'sprint'
-      and $g->{type} eq 'uniq'
+      and $type eq 'uniq'
         and (grep {index($g->{milestone}, $_) > -1}
              qw/Ijyb Sigmund Sonja/);
 
