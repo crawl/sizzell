@@ -40,11 +40,15 @@ my $ANNOUNCE_CHAN  = '##crawl';
 my @stonefiles     = ('/var/lib/dgamelaunch/crawl-rel/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-old/saves/milestones',
-                      '/var/lib/dgamelaunch/crawl-spr/saves/milestones');
+                      '/var/lib/dgamelaunch/crawl-spr/saves/milestones',
+                      '/var/lib/dgamelaunch/crawl-rel-7668535/saves/milestones'
+                     );
 my @logfiles       = ('/var/lib/dgamelaunch/crawl-rel/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-old/saves/logfile',
-                      '/var/lib/dgamelaunch/crawl-spr/saves/logfile');
+                      '/var/lib/dgamelaunch/crawl-spr/saves/logfile',
+                      '/var/lib/dgamelaunch/crawl-rel-7668535/saves/logfile'
+                     );
 
 my $DGL_INPROGRESS_DIR    = '/var/lib/dgamelaunch/dgldir/inprogress';
 my $DGL_TTYREC_DIR        = '/var/lib/dgamelaunch/dgldir/ttyrec';
