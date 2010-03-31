@@ -26,6 +26,7 @@ use warnings;
 use POE qw(Component::IRC);
 use POSIX qw(setsid); # For daemonization.
 use File::Find;
+use File::Glob qw/:globally :nocase/;
 
 my $nickname       = 'Gretell';
 my $ircname        = 'Gretell the Crawl Bot';
@@ -496,8 +497,9 @@ sub player_whereis_line($) {
   my $final_where;
 
   for my $where_path (@whereis_path) {
-    my $where_file = "$where_path/$realnick.where";
-    if (-r $where_file) {
+    my @where_files = glob("$where_path/$realnick.where*");
+    if (@where_files) {
+      $where_file = $where_files[0];
       if (defined($final_where) && length($final_where) > 0) {
         if ((stat($final_where))[9] < (stat($where_file))[9]) {
           $final_where = $where_file;
