@@ -494,7 +494,7 @@ sub cmd_players {
 sub player_whereis_file($) {
   my $realnick = shift;
   my @crawldirs      = glob('/var/lib/dgamelaunch/crawl-*');
-  my @whereis_path   = map { "$_/saves/" } @crawldirs;
+  my @whereis_path   = map { "$_/saves" } @crawldirs;
 
   my $where_file;
   my $final_where;
@@ -568,7 +568,7 @@ sub show_dump_file {
       'crawl-anc' => 'ancient',
       'crawl-svn' => 'trunk' );
 
-  my $dump_file = "/var/lib/dgamelaunch/$gamedir/$player/$player.txt";
+  my $dump_file = "/var/lib/dgamelaunch/$gamedir/morgue/$player/$player.txt";
 
   unless (-f $dump_file) {
     post_message($kernel, $sender, $target,
