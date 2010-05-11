@@ -52,9 +52,12 @@ my $DGL_TTYREC_DIR        = '/var/lib/dgamelaunch/dgldir/ttyrec';
 my $INACTIVE_IDLE_CEILING_SECONDS = 300;
 
 my $MAX_LENGTH = 450;
+my $SERVER_BASE_URL = 'http://crawl.develz.org';
+my $MORGUE_BASE_URL = "$SERVER_BASE_URL/morgues";
 
 my %COMMANDS = (
   '@whereis' => \&cmd_whereis,
+  '@dump' => \&cmd_dump,
   '!cdo'     => \&cmd_players,
   '@players' => \&cmd_players,
   '@??' => \&cmd_trunk_monsterinfo,
@@ -488,7 +491,7 @@ sub cmd_players {
   post_message($kernel, $sender, $private ? $nick : $channel, $message);
 }
 
-sub player_whereis_line($) {
+sub player_whereis_file($) {
   my $realnick = shift;
   my @crawldirs      = glob('/var/lib/dgamelaunch/crawl-*');
   my @whereis_path   = map { "$_/saves/" } @crawldirs;
@@ -510,12 +513,17 @@ sub player_whereis_line($) {
       }
     }
   }
+  undef $final_where unless defined($final_where) && length($final_where) > 0;
+  return $final_where;
+}
 
-  unless (defined($final_where) && length($final_where) > 0) {
-    return undef;
-  }
+sub player_whereis_line($) {
+  my $realnick = shift;
+  my $where_file = player_whereis_file($realnick);
 
-  open my $in, '<', $final_where or return undef;
+  return undef unless $where_file;
+
+  open my $in, '<', $where_file or return undef;
   chomp( my $where = <$in> );
   close $in;
 
@@ -546,6 +554,51 @@ sub cmd_whereis {
     return;
   }
   show_where_information($kernel, $sender, $target, $where);
+}
+
+sub show_dump_file {
+  my ($kernel, $sender, $target, $whereis_file) = @_;
+
+  my ($gamedir, $player) =
+    $whereis_file =~ m{/(crawl-\w+)[^/]*/saves/(\w+)[.]where};
+
+  my %GAME_WEB_MAPPINGS =
+    ( 'crawl-old' => '0.5',
+      'crawl-rel' => '0.6',
+      'crawl-anc' => 'ancient',
+      'crawl-svn' => 'trunk' );
+
+  my $dump_file = "/var/lib/dgamelaunch/$gamedir/$player/$player.txt";
+
+  unless (-f $dump_file) {
+    post_message($kernel, $sender, $target,
+                 "Can't find character dump for $player.");
+    return;
+  }
+
+  my $web_morgue_dir = $GAME_WEB_MAPPINGS{$gamedir};
+  unless ($web_morgue_dir) {
+    post_message($kernel, $sender, $target,
+                 "Can't find URL base for character dump.");
+    return;
+  }
+
+  post_message($kernel, $sender, $target,
+               "$MORGUE_BASE_URL/$web_morgue_dir/$player/$player.txt");
+}
+
+sub cmd_dump {
+  my ($private, $kernel, $sender, $nick, $channel, $verbatim) = @_;
+
+  my $realnick = find_named_nick($nick, $verbatim);
+  my $whereis_file = player_whereis_file($realnick);
+  my $target = $private ? $nick : $channel;
+  unless ($whereis_file) {
+    post_message($kernel, $sender, $target,
+                 "No where information for $realnick.");
+    return;
+  }
+  show_dump_file($kernel, $sender, $target, $whereis_file);
 }
 
 sub format_crawl_date {
