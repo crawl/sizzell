@@ -37,6 +37,7 @@ my $ircserver      = 'kornbluth.freenode.net';
 my $port           = 8001;
 my @CHANNELS       = ('##crawl', '##crawl-dev');
 my $ANNOUNCE_CHAN  = '##crawl';
+my $DEV_CHAN       = '##crawl-dev';
 
 my @stonefiles     = ('/var/lib/dgamelaunch/crawl-rel/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones',
@@ -154,6 +155,13 @@ sub newsworthy
   return 1;
 }
 
+sub devworthy
+{
+  my $g = shift;
+  my $type = $$g{type} || '';
+  return $type eq 'crash';
+}
+
 # Given an xlogfile hash, returns the place where the event occurred.
 sub xlog_place
 {
@@ -168,6 +176,29 @@ sub xlog_place
     }
   }
   return $place;
+}
+
+sub report_milestone
+{
+  my $game_ref = shift;
+  my $channel  = shift;
+
+  my $place = xlog_place($game_ref);
+  my $placestring = " ($place)";
+  if ($game_ref->{milestone} eq "escaped from the Abyss!"
+      || $game_ref->{milestone} eq "reached level 27 of the Dungeon.")
+  {
+    $placestring = "";
+  }
+
+  $irc->yield(privmsg => $channel =>
+              sprintf("%s (L%s %s) %s%s",
+                      $game_ref->{name},
+                      $game_ref->{xl},
+                      $game_ref->{char},
+                      $game_ref->{milestone},
+                      $placestring)
+             );
 }
 
 sub parse_milestone_file
@@ -188,24 +219,8 @@ sub parse_milestone_file
 
   my $game_ref = demunge_xlogline($line);
 
-  if (newsworthy($game_ref)) {
-    my $place = xlog_place($game_ref);
-    my $placestring = " ($place)";
-    if ($game_ref->{milestone} eq "escaped from the Abyss!"
-        || $game_ref->{milestone} eq "reached level 27 of the Dungeon.")
-    {
-      $placestring = "";
-    }
-
-    $irc->yield(privmsg => $ANNOUNCE_CHAN =>
-                sprintf "%s (L%s %s) %s%s",
-                $game_ref->{name},
-                $game_ref->{xl},
-                $game_ref->{char},
-                $game_ref->{milestone},
-                $placestring
-               );
-  }
+  report_milestone($game_ref, $ANNOUNCE_CHAN) if newsworthy($game_ref);
+  report_milestone($game_ref, $DEV_CHAN) if devworthy($game_ref);
 
   seek($stonehandle, $href->[2], 0);
 }
