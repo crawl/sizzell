@@ -127,6 +127,9 @@ sub newsworthy
   my $type = $$g{type} || '';
 
   return 0
+    if $type eq 'crash';
+
+  return 0
     if ($type eq 'enter' || $type eq 'br.enter')
       and grep {$g->{br} eq $_} qw/Temple/;
 
