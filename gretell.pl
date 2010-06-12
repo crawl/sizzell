@@ -286,8 +286,7 @@ sub sanitise_nick {
 }
 
 sub get_nick {
-  my $who = shift;
-  my ($nick) = $who =~ /(.*?)!/;
+  my $nick = shift;
   return $nick? sanitise_nick($nick) : undef;
 }
 
