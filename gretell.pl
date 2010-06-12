@@ -23,7 +23,6 @@
 use strict;
 use warnings;
 
-use POE qw(Component::IRC);
 use POSIX qw(setsid); # For daemonization.
 use File::Find;
 use File::Glob qw/:globally :nocase/;
@@ -52,7 +51,9 @@ my $DGL_INPROGRESS_DIR    = '/var/lib/dgamelaunch/dgldir/inprogress';
 my $DGL_TTYREC_DIR        = '/var/lib/dgamelaunch/dgldir/ttyrec';
 my $INACTIVE_IDLE_CEILING_SECONDS = 300;
 
-my $MAX_LENGTH = 450;
+my $MAX_LENGTH = 420;
+# The largest message to paginate in PM.
+my $MAX_PAGINATE_LENGTH = 2000;
 my $SERVER_BASE_URL = 'http://crawl.develz.org';
 my $MORGUE_BASE_URL = "$SERVER_BASE_URL/morgues";
 
@@ -75,33 +76,14 @@ my %COMMANDS = (
 my @stonehandles = open_handles(@stonefiles);
 my @loghandles = open_handles(@logfiles);
 
-# We create a new PoCo-IRC object and component.
-my $irc = POE::Component::IRC->spawn(
-      nick    => $nickname,
-      server  => $ircserver,
-      port    => $port,
-      ircname => $ircname,
-      localaddr => '80.190.48.234',
-) or die "Oh noooo! $!";
+my $BOT = Gretell->new(nick     => $nickname,
+                       server   => $ircserver,
+                       port     => $port,
+                       ircname  => $ircname,
+                       channels => [ @CHANNELS ])
+  or die "Unable to instantiate Gretell\n";
 
-POE::Session->create(
-      inline_states => {
-        check_files => \&check_files,
-        irc_public  => \&irc_public,
-        irc_msg     => \&irc_msg
-      },
-
-      package_states => [
-        'main' => [
-          qw(_default _start irc_001 irc_255)
-        ],
-      ],
-      heap => {
-        irc => $irc
-      },
-);
-
-$poe_kernel->run();
+$BOT->run();
 exit 0;
 
 sub open_handles
@@ -178,6 +160,22 @@ sub xlog_place
   return $place;
 }
 
+sub raw_message_post {
+  my ($m, $output) = @_;
+  # Handle emotes (/me does foo)
+  if ($output =~ m{^/me }) {
+    $output =~ s{^/me }{};
+    $BOT->emote(channel => $$m{channel},
+                who => $$m{who},
+                body => $output);
+    return;
+  }
+
+  $BOT->say(channel => $$m{channel},
+            who => $$m{who},
+            body => $output);
+}
+
 sub report_milestone
 {
   my $game_ref = shift;
@@ -191,14 +189,13 @@ sub report_milestone
     $placestring = "";
   }
 
-  $irc->yield(privmsg => $channel =>
-              sprintf("%s (L%s %s) %s%s",
-                      $game_ref->{name},
-                      $game_ref->{xl},
-                      $game_ref->{char},
-                      $game_ref->{milestone},
-                      $placestring)
-             );
+  post_message({ channel => $channel },
+               sprintf("%s (L%s %s) %s%s",
+                       $game_ref->{name},
+                       $game_ref->{xl},
+                       $game_ref->{char},
+                       $game_ref->{milestone},
+                       $placestring));
 }
 
 sub parse_milestone_file
@@ -243,7 +240,7 @@ sub parse_log_file
   if (newsworthy($game_ref)) {
     my $output = pretty_print($game_ref);
     $output =~ s/ on \d{4}-\d{2}-\d{2}//;
-    $irc->yield(privmsg => $ANNOUNCE_CHAN => $output);
+    post_message({ channel => $ANNOUNCE_CHAN }, $output);
   }
   seek($loghandle, $href->[2], 0);
 }
@@ -264,86 +261,19 @@ sub check_logfiles
 
 sub check_files
 {
-  $_[KERNEL]->delay('check_files' => 1);
-
   check_stonefiles();
   check_logfiles();
 }
 
-# We registered for all events, this will produce some debug info.
-sub _default
-{
-  my ($event, $args) = @_[ARG0 .. $#_];
-  my @output = ( "$event: " );
-
-  foreach my $arg ( @$args ) {
-      if ( ref($arg) eq 'ARRAY' ) {
-              push( @output, "[" . join(" ,", @$arg ) . "]" );
-      } else {
-              push ( @output, "'$arg'" );
-      }
-  }
-  print STDOUT join ' ', @output, "\n";
-  return 0;
-}
-
-sub _start
-{
-  my ($kernel,$heap) = @_[KERNEL,HEAP];
-
-  # We get the session ID of the component from the object
-  # and register and connect to the specified server.
-  my $irc_session = $heap->{irc}->session_id();
-  $kernel->post( $irc_session => register => 'all' );
-  $kernel->post( $irc_session => connect => { } );
-  undef;
-}
-
-sub irc_001
-{
-  my ($kernel,$sender) = @_[KERNEL,SENDER];
-
-  # Get the component's object at any time by accessing the heap of
-  # the SENDER
-  my $poco_object = $sender->get_heap();
-  print "Connected to ", $poco_object->server_name(), "\n";
-
-  # In any irc_* events SENDER will be the PoCo-IRC session
-  for my $channel (@CHANNELS) {
-    $kernel->post( $sender => join => $channel );
-  }
-  undef;
-}
-
-sub irc_255
-{
-  $_[KERNEL]->yield("check_files");
-
-  open(my $handle, '<', '.password') or warn "Unable to read .password: $!";
-  my $password = <$handle>;
-  chomp $password;
-
-  $irc->yield(privmsg => "nickserv" => "identify $password");
-}
-
-sub irc_msg {
-  process_irc_message('PRIVATE', @_[KERNEL,SENDER,ARG0,ARG1,ARG2]);
-}
-
-sub irc_public {
-  process_irc_message(0, @_[KERNEL,SENDER,ARG0,ARG1,ARG2]);
-}
-
-sub process_irc_message {
-  my ($private, $kernel,$sender,$who,$where,$verbatim) = @_;
-  return unless $kernel && $sender && $who && $where && $verbatim;
+sub process_message {
+  my $m = shift;
+  my ($who, $channel, $verbatim) = @$m{qw/who channel body/};
+  return unless $who && $channel && $verbatim;
 
   my $nick = get_nick($who) or return;
   my $command = get_command($verbatim) or return;
-  my $channel = $where->[0] or return;
 
-  process_command($private, $command, $kernel, $sender,
-                  $nick, $channel, $verbatim);
+  process_command($m, $command, $nick, $verbatim);
 
   undef;
 }
@@ -367,17 +297,44 @@ sub get_command {
   return $command;
 }
 
-sub post_message {
-  my ($kernel, $sender, $channel, $msg) = @_;
-  $msg = substr($msg, 0, $MAX_LENGTH) if length($msg) > $MAX_LENGTH;
-  $kernel->post($sender => privmsg => $channel => $msg);
+sub post_message($$) {
+  my ($m, $output) = @_;
+
+  my $private = $$m{channel} eq 'msg';
+
+  # Hard limit on output size, regardless of whether this is PM or
+  # public:
+  $output = substr($output, 0, $MAX_PAGINATE_LENGTH) . "..."
+    if length($output) > $MAX_PAGINATE_LENGTH;
+
+  # On PM, send multiple lines of output instead of truncating.
+  if ($private) {
+    my $length = length($output);
+    my $PAGE = $MAX_LENGTH;
+    for (my $start = 0; $start < $length; $start += $PAGE) {
+      if ($length - $start > $PAGE) {
+        my $spcpos = rindex($output, ' ', $start + $PAGE - 1);
+        if ($spcpos != -1 && $spcpos > $start) {
+          raw_message_post($m, substr($output, $start, $spcpos - $start));
+          $start = $spcpos + 1 - $PAGE;
+          next;
+        }
+      }
+      raw_message_post($m, substr($output, $start, $PAGE));
+    }
+  }
+  else {
+    $output = substr($output, 0, $MAX_LENGTH) . "..."
+      if length($output) > $MAX_LENGTH;
+    raw_message_post($m, $output);
+  }
 }
 
 #######################################################################
 # Commands
 
-sub process_command {
-  my ($private, $command, $kernel, $sender, $nick, $channel, $verbatim) = @_;
+sub process_command($$$$) {
+  my ($m, $command, $nick, $verbatim) = @_;
 
   if (substr($command, 0, 3) eq '@??')
   {
@@ -389,7 +346,7 @@ sub process_command {
   }
 
   my $proc = $COMMANDS{$command} or return;
-  &$proc($private, $kernel, $sender, $nick, $channel, $verbatim);
+  &$proc($m, $nick, $verbatim);
 }
 
 sub find_named_nick {
@@ -408,18 +365,18 @@ sub make_shellsafe($) {
 }
 
 sub cmd_trunk_monsterinfo {
-  my ($private, $kernel, $sender, $nick, $channel, $verbatim) = @_;
+  my ($m, $nick, $verbatim) = @_;
   my $monster_name = make_shellsafe(substr($verbatim, 3));
   my $monster_info = qx/monster-trunk '$monster_name'/;
-  post_message($kernel, $sender, $private ? $nick : $channel, $monster_info);
+  post_message($m, $monster_info);
 }
 
 sub cmd_monsterinfo {
-  my ($private, $kernel, $sender, $nick, $channel, $verbatim) = @_;
+  my ($m, $nick, $verbatim) = @_;
 
   my $monster_name = make_shellsafe(substr($verbatim, 2));
   my $monster_info = `monster $monster_name`;
-  post_message($kernel, $sender, $private ? $nick : $channel, $monster_info);
+  post_message($m, $monster_info);
 }
 
 sub ttyrec_idle_time_seconds($) {
@@ -503,10 +460,10 @@ sub get_active_players_line($) {
 }
 
 sub cmd_players {
-  my ($private, $kernel, $sender, $nick, $channel, $verbatim) = @_;
+  my ($m, $nick, $verbatim) = @_;
   my $check_not_idle = $verbatim =~ /-a/;
   my $message = get_active_players_line($check_not_idle);
-  post_message($kernel, $sender, $private ? $nick : $channel, $message);
+  post_message($m, $message);
 }
 
 sub player_whereis_file($) {
@@ -560,22 +517,20 @@ sub player_whereis_add_info($) {
 }
 
 sub cmd_whereis {
-  my ($private, $kernel, $sender, $nick, $channel, $verbatim) = @_;
+  my ($m, $nick, $verbatim) = @_;
 
   # Get the nick to act on.
   my $realnick = find_named_nick($nick, $verbatim);
   my $where = player_whereis_hash($realnick);
-  my $target = $private ? $nick : $channel;
   unless ($where) {
-    post_message($kernel, $sender, $target,
-                 "No where information for $realnick.");
+    post_message($m, "No where information for $realnick.");
     return;
   }
-  show_where_information($kernel, $sender, $target, $where);
+  show_where_information($m, $where);
 }
 
-sub show_dump_file {
-  my ($kernel, $sender, $target, $whereis_file) = @_;
+sub show_dump_file($$) {
+  my ($m, $whereis_file) = @_;
 
   my ($gamedir, $player) =
     $whereis_file =~ m{/(crawl-\w+)[^/]*/saves/(\w+)[.]where};
@@ -589,34 +544,29 @@ sub show_dump_file {
   my $dump_file = "/var/lib/dgamelaunch/$gamedir/morgue/$player/$player.txt";
 
   unless (-f $dump_file) {
-    post_message($kernel, $sender, $target,
-                 "Can't find character dump for $player.");
+    post_message($m, "Can't find character dump for $player.");
     return;
   }
 
   my $web_morgue_dir = $GAME_WEB_MAPPINGS{$gamedir};
   unless ($web_morgue_dir) {
-    post_message($kernel, $sender, $target,
-                 "Can't find URL base for character dump.");
+    post_message($m, "Can't find URL base for character dump.");
     return;
   }
 
-  post_message($kernel, $sender, $target,
-               "$MORGUE_BASE_URL/$web_morgue_dir/$player/$player.txt");
+  post_message($m, "$MORGUE_BASE_URL/$web_morgue_dir/$player/$player.txt");
 }
 
 sub cmd_dump {
-  my ($private, $kernel, $sender, $nick, $channel, $verbatim) = @_;
+  my ($m, $nick, $verbatim) = @_;
 
   my $realnick = find_named_nick($nick, $verbatim);
   my $whereis_file = player_whereis_file($realnick);
-  my $target = $private ? $nick : $channel;
   unless ($whereis_file) {
-    post_message($kernel, $sender, $target,
-                 "No where information for $realnick.");
+    post_message($m, "No where information for $realnick.");
     return;
   }
-  show_dump_file($kernel, $sender, $target, $whereis_file);
+  show_dump_file($m, $whereis_file);
 }
 
 sub format_crawl_date {
@@ -628,8 +578,8 @@ sub format_crawl_date {
   return sprintf("%04d-%02d-%02d", $year, $mon, $day);
 }
 
-sub show_where_information {
-  my ($kernel, $sender, $channel, $wref) = @_;
+sub show_where_information($$) {
+  my ($m, $wref) = @_;
   return unless $wref;
 
   my %wref = %$wref;
@@ -666,7 +616,7 @@ sub show_where_information {
     $msg = "$wref{name} the $wref{title} (L$wref{xl} $wref{char})" .
            "$god$what$preposition$place$date$turn$punctuation";
   }
-  post_message($kernel, $sender, $channel, $msg);
+  post_message($m, $msg);
 }
 
 #######################################################################
@@ -779,4 +729,73 @@ sub serialize_time
 
   return join ' ', @fields if @fields;
   return '0s';
+}
+
+package Gretell;
+use base 'Bot::BasicBot';
+
+sub connected {
+  my $self = shift;
+
+  open(my $handle, '<', '.password') or warn "Unable to read .password: $!";
+  my $password = <$handle>;
+  chomp $password;
+
+  $self->say(channel => 'msg',
+             who     => 'nickserv',
+             body    => "identify $password");
+
+  return undef;
+}
+
+sub said {
+  my ($self, $m) = @_;
+  main::process_message($m);
+  return undef;
+}
+
+sub tick {
+  main::check_files();
+  return 1;
+}
+
+# Override BasicBot say since it tries to get clever with linebreaks.
+sub say {
+  # If we're called without an object ref, then we're handling saying
+  # stuff from inside a forked subroutine, so we'll freeze it, and toss
+  # it out on STDOUT so that POE::Wheel::Run's handler can pick it up.
+  if ( !ref( $_[0] ) ) {
+    print $_[0] . "\n";
+    return 1;
+  }
+
+  # Otherwise, this is a standard object method
+
+  my $self = shift;
+  my $args;
+  if (ref($_[0])) {
+    $args = shift;
+  } else {
+    my %args = @_;
+    $args = \%args;
+  }
+
+  my $body = $args->{body};
+
+  # add the "Foo: bar" at the start
+  $body = "$args->{who}: $body"
+    if ( $args->{channel} ne "msg" and $args->{address} );
+
+  # work out who we're going to send the message to
+  my $who = ( $args->{channel} eq "msg" ) ? $args->{who} : $args->{channel};
+
+  unless ( $who && $body ) {
+    print STDERR "Can't PRIVMSG without target and body\n";
+    print STDERR " called from ".([caller]->[0])." line ".([caller]->[2])."\n";
+    print STDERR " who = '$who'\n body = '$body'\n";
+    return;
+  }
+
+  my ($ewho, $ebody) = $self->charset_encode($who, $body);
+  $self->privmsg($ewho, $ebody);
 }
