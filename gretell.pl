@@ -183,8 +183,9 @@ sub report_milestone
 
   my $place = xlog_place($game_ref);
   my $placestring = " ($place)";
-  if ($game_ref->{milestone} eq "escaped from the Abyss!"
-      || $game_ref->{milestone} eq "reached level 27 of the Dungeon.")
+  my $milestone = $$game_ref{milestone} || '';
+  if ($milestone eq "escaped from the Abyss!"
+      || $milestone eq "reached level 27 of the Dungeon.")
   {
     $placestring = "";
   }
@@ -194,7 +195,7 @@ sub report_milestone
                        $game_ref->{name},
                        $game_ref->{xl},
                        $game_ref->{char},
-                       $game_ref->{milestone},
+                       $milestone,
                        $placestring));
 }
 
