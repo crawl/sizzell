@@ -366,16 +366,16 @@ sub make_shellsafe($) {
 
 sub cmd_trunk_monsterinfo {
   my ($m, $nick, $verbatim) = @_;
-  my $monster_name = make_shellsafe(substr($verbatim, 3));
-  my $monster_info = qx/monster-trunk '$monster_name'/;
+  my $monster_name = substr($verbatim, 3);
+  my $monster_info = qx/monster-trunk \Q$monster_name\E/;
   post_message($m, $monster_info);
 }
 
 sub cmd_monsterinfo {
   my ($m, $nick, $verbatim) = @_;
 
-  my $monster_name = make_shellsafe(substr($verbatim, 2));
-  my $monster_info = `monster $monster_name`;
+  my $monster_name = substr($verbatim, 2);
+  my $monster_info = `monster \Q$monster_name\E`;
   post_message($m, $monster_info);
 }
 
