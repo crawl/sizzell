@@ -38,14 +38,17 @@ my @CHANNELS       = ('##crawl', '##crawl-dev');
 my $ANNOUNCE_CHAN  = '##crawl';
 my $DEV_CHAN       = '##crawl-dev';
 
-my @stonefiles     = ('/var/lib/dgamelaunch/crawl-rel/saves/milestones',
+my @stonefiles     = ('/var/lib/dgamelaunch/crawl-0.6/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones',
-                      '/var/lib/dgamelaunch/crawl-old/saves/milestones',
-                      '/var/lib/dgamelaunch/crawl-spr/saves/milestones-sprint');
-my @logfiles       = ('/var/lib/dgamelaunch/crawl-rel/saves/logfile',
+                      '/var/lib/dgamelaunch/crawl-svn/saves/milestones-sprint',
+                      '/var/lib/dgamelaunch/crawl-0.7/saves/milestones',
+                      '/var/lib/dgamelaunch/crawl-0.7/saves/milestones-sprint');
+
+my @logfiles       = ('/var/lib/dgamelaunch/crawl-0.6/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile',
-                      '/var/lib/dgamelaunch/crawl-old/saves/logfile',
-                      '/var/lib/dgamelaunch/crawl-spr/saves/logfile-sprint');
+                      '/var/lib/dgamelaunch/crawl-svn/saves/logfile-sprint',
+                      '/var/lib/dgamelaunch/crawl-0.7/saves/logfile',
+                      '/var/lib/dgamelaunch/crawl-0.7/saves/logfile-sprint');
 
 my $DGL_INPROGRESS_DIR    = '/var/lib/dgamelaunch/dgldir/inprogress';
 my $DGL_TTYREC_DIR        = '/var/lib/dgamelaunch/dgldir/ttyrec';
@@ -151,7 +154,7 @@ sub xlog_place
   my $sprint = $$g{lv} =~ /sprint/i;
   my $place = $$g{place};
   if ($sprint) {
-    if ($place eq 'D:1') {
+    if ($place eq 'D') {
       $place = 'Sprint';
     } else {
       $place = "$place (Sprint)";
