@@ -105,19 +105,34 @@ sub open_handles
   return @handles;
 }
 
+sub game_place_branch($)
+{
+  my $g = shift;
+  my $place = $$g{place};
+  if ($place =~ /:/) {
+    ($place) = $place =~ /(.*):/;
+  }
+  $place
+}
+
 sub newsworthy
 {
   my $g = shift;
 
   # Milestone type, empty if this is not a milestone.
   my $type = $$g{type} || '';
+  my $br_enter = $type eq 'enter' || $type eq 'br.enter';
+  my $place_branch = game_place_branch($g);
 
   return 0
     if $type eq 'crash';
 
   return 0
-    if ($type eq 'enter' || $type eq 'br.enter')
-      and grep {$g->{br} eq $_} qw/Temple/;
+    if $br_enter
+      && grep($place_branch eq $_, qw/Temple Lair Hive Snake Swamp Shoals D
+                                      Orc Elf Vault Crypt Blade/);
+
+  return 0 if grep($type eq $_, qw/god.mollify god.renounce god.worship/);
 
   # Suppress all Sprint events <300 turns.
   return 0
