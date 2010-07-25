@@ -60,6 +60,11 @@ my $MAX_PAGINATE_LENGTH = 2000;
 my $SERVER_BASE_URL = 'http://crawl.develz.org';
 my $MORGUE_BASE_URL = "$SERVER_BASE_URL/morgues";
 
+my @BORING_UNIQUES = qw/Jessica Ijyb Blork Terence Edmund Psyche
+                        Joseph Josephine Harold Norbert Jozef
+                        Maud Duane Grum Gastronok Dowan Duvessa
+                        Pikel Menkaure Purgy Grinder Maurice/;
+
 my %COMMANDS = (
   '@whereis' => \&cmd_whereis,
   '@dump' => \&cmd_dump,
@@ -115,6 +120,12 @@ sub game_place_branch($)
   $place
 }
 
+sub milestone_is_uniq($) {
+  my $g = shift;
+  my $type = $$g{type} || '';
+  return grep($type, qw/uniq unique/);
+}
+
 sub newsworthy
 {
   my $g = shift;
@@ -129,10 +140,11 @@ sub newsworthy
 
   return 0
     if $br_enter
-      && grep($place_branch eq $_, qw/Temple Lair Hive Snake Swamp Shoals D
-                                      Orc Elf Vault Crypt Blade/);
+      && grep($place_branch eq $_, qw/Temple Lair Hive D Orc/);
 
-  return 0 if grep($type eq $_, qw/god.mollify god.renounce god.worship/);
+  return 0
+    if milestone_is_uniq($g) && grep(index($$g{milestone}, $_) != -1,
+                                     @BORING_UNIQUES);
 
   # Suppress all Sprint events <300 turns.
   return 0
