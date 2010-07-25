@@ -63,7 +63,7 @@ my $MORGUE_BASE_URL = "$SERVER_BASE_URL/morgues";
 my @BORING_UNIQUES = qw/Jessica Ijyb Blork Terence Edmund Psyche
                         Joseph Josephine Harold Norbert Jozef
                         Maud Duane Grum Gastronok Dowan Duvessa
-                        Pikel Menkaure Purgy Grinder Maurice Yiuf/;
+                        Pikel Menkaure Purgy Grinder Maurice Yiuf Urug/;
 
 my %COMMANDS = (
   '@whereis' => \&cmd_whereis,
