@@ -125,7 +125,7 @@ sub newsworthy
   my $place_branch = game_place_branch($g);
 
   return 0
-    if $type eq 'crash';
+    if ($type eq 'crash' || $type eq 'monstrous');
 
   return 0
     if $br_enter
