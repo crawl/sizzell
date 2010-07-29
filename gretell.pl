@@ -143,6 +143,11 @@ sub newsworthy
     if $br_enter
       && grep($place_branch eq $_, qw/Temple Lair Hive D Orc/);
 
+  if ($type eq 'zig') {
+    my ($depth) = ($$g{milestone} || '') =~ /reached level (\d+)/;
+    return 0 if $depth < 18 && $$g{xl} >= 27;
+  }
+
   return 0
     if milestone_is_uniq($g) && grep(index($$g{milestone}, $_) != -1,
                                      @BORING_UNIQUES);
