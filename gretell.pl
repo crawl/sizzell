@@ -168,7 +168,7 @@ sub newsworthy
         && ($g->{sc} <= 2000
             && ($g->{ktyp} eq 'quitting'
                 || $g->{ktyp} eq 'leaving'
-                || $g->{turn} <= 30)));
+                || $g->{turn} <= 500)));
 
   return 1;
 }
