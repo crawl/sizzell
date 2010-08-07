@@ -569,11 +569,13 @@ sub show_dump_file($$) {
   my ($m, $whereis_file) = @_;
 
   my ($gamedir, $player) =
-    $whereis_file =~ m{/(crawl-\w+)[^/]*/saves/(\w+)[.]where};
+    $whereis_file =~ m{/(crawl-(?:\w+|\d+.\d+))[^/]*/saves/(\w+)[.]where};
 
   my %GAME_WEB_MAPPINGS =
     ( 'crawl-old' => '0.5',
       'crawl-rel' => '0.6',
+      'crawl-0.6' => '0.6',
+      'crawl-0.7' => '0.7',
       'crawl-anc' => 'ancient',
       'crawl-svn' => 'trunk' );
 
