@@ -50,6 +50,8 @@ my @logfiles       = ('/var/lib/dgamelaunch/crawl-0.6/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-0.7/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-0.7/saves/logfile-sprint');
 
+my @announcefiles  = ('/home/services/crawl/source/announcements.log');
+
 my $DGL_INPROGRESS_DIR    = '/var/lib/dgamelaunch/dgldir/inprogress';
 my $DGL_TTYREC_DIR        = '/var/lib/dgamelaunch/dgldir/ttyrec';
 my $INACTIVE_IDLE_CEILING_SECONDS = 300;
@@ -84,6 +86,7 @@ my %COMMANDS = (
 
 my @stonehandles = open_handles(@stonefiles);
 my @loghandles = open_handles(@logfiles);
+my @announcehandles = open_handles(@announcefiles);
 
 my $BOT = Gretell->new(nick     => $nickname,
                        server   => $ircserver,
@@ -282,6 +285,28 @@ sub parse_log_file
   seek($loghandle, $href->[2], 0);
 }
 
+sub parse_announce_file
+{
+  my $href = shift;
+  my $announcehandle = $href->[1];
+
+  $href->[2] = tell($announcehandle);
+  my $line = <$announcehandle>;
+
+  if (!defined($line) || $line !~ /\n$/) {
+    seek($announcehandle, $href->[2], 0);
+    return;
+  }
+
+  $href->[2] = tell($announcehandle);
+  return unless defined($line) && $line =~ /\S/;
+
+  post_message({ channel => $ANNOUNCE_CHAN }, $line);
+  post_message({ channel => $DEV_CHAN }, $line);
+
+  seek($announcehandle, $href->[2], 0);
+}
+
 sub check_stonefiles
 {
   for my $stoneh (@stonehandles) {
@@ -296,10 +321,18 @@ sub check_logfiles
   }
 }
 
+sub check_announcefiles
+{
+  for my $announceh (@announcehandles) {
+    parse_announce_file($announceh);
+  }
+}
+
 sub check_files
 {
   check_stonefiles();
   check_logfiles();
+  check_announcefiles();
 }
 
 sub process_message {
