@@ -143,16 +143,16 @@ sub game_type($) {
 }
 
 sub game_type_name($) {
-  my $type = game_type(@_);
+  my $type = game_type(shift);
   $type && $GAME_TYPE_NAMES{$type}
 }
 
 sub game_is_sprint($) {
-  game_type(@_) eq 'spr'
+  game_type(shift) eq 'spr'
 }
 
 sub game_is_zotdef($) {
-  game_type(@_) eq 'zot'
+  game_type(shift) eq 'zot'
 }
 
 sub newsworthy
