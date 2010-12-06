@@ -41,12 +41,14 @@ my $DEV_CHAN       = '##crawl-dev';
 my @stonefiles     = ('/var/lib/dgamelaunch/crawl-0.6/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones-sprint',
+                      '/var/lib/dgamelaunch/crawl-svn/saves/milestones-zotdef',
                       '/var/lib/dgamelaunch/crawl-0.7/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-0.7/saves/milestones-sprint');
 
 my @logfiles       = ('/var/lib/dgamelaunch/crawl-0.6/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile-sprint',
+                      '/var/lib/dgamelaunch/crawl-svn/saves/logfile-zotdef',
                       '/var/lib/dgamelaunch/crawl-0.7/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-0.7/saves/logfile-sprint');
 
@@ -67,6 +69,9 @@ my @BORING_UNIQUES = qw/Jessica Ijyb Blork Terence Edmund Psyche
                         Maud Duane Grum Gastronok Dowan Duvessa
                         Pikel Menkaure Purgy Grinder Maurice Yiuf
                         Urug Snorg Eustachio Ilsuiw Ribbit Nergalle/;
+
+my %GAME_TYPE_NAMES = (zot => 'ZotDef',
+                       spr => 'Sprint');
 
 my %COMMANDS = (
   '@whereis' => \&cmd_whereis,
@@ -130,6 +135,26 @@ sub milestone_is_uniq($) {
   return grep($type, qw/uniq unique/);
 }
 
+sub game_type($) {
+  my $g = shift;
+  my ($type) = $$g{lv} =~ /-(.*)/;
+  $type = lc(substr($type, 0, 3)) if $type;
+  $type
+}
+
+sub game_type_name($) {
+  my $type = game_type(@_);
+  $type && $GAME_TYPE_NAMES{$type}
+}
+
+sub game_is_sprint($) {
+  game_type(@_) eq 'spr'
+}
+
+sub game_is_zotdef($) {
+  game_type(@_) eq 'zot'
+}
+
 sub newsworthy
 {
   my $g = shift;
@@ -154,16 +179,13 @@ sub newsworthy
     if milestone_is_uniq($g) && grep(index($$g{milestone}, $_) != -1,
                                      @BORING_UNIQUES);
 
-  # Suppress all Sprint events <300 turns.
-  return 0
-    if $g->{lv} =~ 'sprint' && ($$g{ktyp} || '') ne 'winning'
-      && $$g{turn} < 300;
+  # Suppress all Sprint/ZotDef events <300 turns.
+  return 0 if (game_type($g) && ($$g{ktyp} || '') ne 'winning'
+               && $$g{turn} < 300);
 
-  return 0
-    if $g->{lv} =~ 'sprint'
-      and $type eq 'uniq'
-        and (grep {index($g->{milestone}, $_) > -1}
-             qw/Ijyb Sigmund Sonja/);
+  return 0 if (game_is_sprint($g) && $type eq 'uniq'
+               && (grep {index($g->{milestone}, $_) > -1}
+                   qw/Ijyb Sigmund Sonja/));
 
   return 0
     if (!$$g{milestone}
@@ -186,14 +208,11 @@ sub devworthy
 sub xlog_place
 {
   my $g = shift;
-  my $sprint = $$g{lv} =~ /sprint/i;
+
+  my $game_type_place_qualifier = game_type_name($g);
   my $place = $$g{place};
-  if ($sprint) {
-    if ($place eq 'D') {
-      $place = 'Sprint';
-    } else {
-      $place = "$place (Sprint)";
-    }
+  if ($game_type_place_qualifier) {
+    $place = "$place ($game_type_place_qualifier)";
   }
   return $place;
 }
