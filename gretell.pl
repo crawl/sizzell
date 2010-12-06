@@ -148,11 +148,11 @@ sub game_type_name($) {
 }
 
 sub game_is_sprint($) {
-  game_type(shift) eq 'spr'
+  (game_type(shift) || '') eq 'spr'
 }
 
 sub game_is_zotdef($) {
-  game_type(shift) eq 'zot'
+  (game_type(shift) || '') eq 'zot'
 }
 
 sub newsworthy
