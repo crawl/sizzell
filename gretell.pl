@@ -137,7 +137,7 @@ sub milestone_is_uniq($) {
 
 sub game_type($) {
   my $g = shift;
-  my ($type) = $$g{lv} =~ /-(.*)/;
+  my ($type) = ($$g{lv} || '') =~ /-(.*)/;
   $type = lc(substr($type, 0, 3)) if $type;
   $type
 }
@@ -514,8 +514,10 @@ sub sort_active_player_where_infos(@) {
 sub player_where_stats($) {
   my $wr = shift;
   return '' unless $wr;
-  my $place = xlog_place($wr);
-  return "L$$wr{xl} @ $place, T:$$wr{turn}";
+  my $place = xlog_place($wr) || '';
+  my $xl = $$wr{xl} || '';
+  my $turn = $$wr{turn} || '';
+  return "L$xl @ $place, T:$turn";
 }
 
 sub player_where_brief($) {
