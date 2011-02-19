@@ -67,8 +67,8 @@ my $MORGUE_BASE_URL = "$SERVER_BASE_URL/morgues";
 my @BORING_UNIQUES = qw/Jessica Ijyb Blork Terence Edmund Psyche
                         Joseph Josephine Harold Norbert Jozef
                         Maud Duane Grum Gastronok Dowan Duvessa
-                        Pikel Menkaure Purgy Grinder Maurice Yiuf
-                        Urug Snorg Eustachio Ilsuiw Ribbit Nergalle/;
+                        Pikel Menkaure Purgy Maurice Yiuf
+                        Urug Snorg Eustachio Ribbit Nergalle/;
 
 my %GAME_TYPE_NAMES = (zot => 'ZotDef',
                        spr => 'Sprint');
