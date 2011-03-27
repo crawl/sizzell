@@ -559,13 +559,14 @@ sub cmd_players {
 sub player_whereis_file($) {
   my $realnick = shift;
   my @crawldirs      = glob('/var/lib/dgamelaunch/crawl-*');
-  my @whereis_path   = map { "$_/saves" } @crawldirs;
+  my @whereis_path   = map { "$_/morgue" } @crawldirs;
 
   my $where_file;
   my $final_where;
 
   for my $where_path (@whereis_path) {
-    my @where_files = glob("$where_path/$realnick.where*");
+    my @where_dir = glob("$where_path/$realnick*/");
+    my @where_files = glob("$where_dir[0]/$realnick.where*");
     if (@where_files) {
       $where_file = $where_files[0];
       if (defined($final_where) && length($final_where) > 0) {
