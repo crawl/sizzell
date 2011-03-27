@@ -273,9 +273,10 @@ sub parse_milestone_file
   return unless defined($line) && $line =~ /\S/;
 
   my $game_ref = demunge_xlogline($line);
-
-  report_milestone($game_ref, $ANNOUNCE_CHAN) if newsworthy($game_ref);
-  report_milestone($game_ref, $DEV_CHAN) if devworthy($game_ref);
+  if ($game_ref) {
+    report_milestone($game_ref, $ANNOUNCE_CHAN) if newsworthy($game_ref);
+    report_milestone($game_ref, $DEV_CHAN) if devworthy($game_ref);
+  }
 
   seek($stonehandle, $href->[2], 0);
 }
@@ -295,7 +296,7 @@ sub parse_log_file
   return unless defined($line) && $line =~ /\S/;
 
   my $game_ref = demunge_xlogline($line);
-  if (newsworthy($game_ref)) {
+  if ($game_ref && newsworthy($game_ref)) {
     my $output = pretty_print($game_ref);
     $output =~ s/ on \d{4}-\d{2}-\d{2}//;
     post_message({ channel => $ANNOUNCE_CHAN }, $output);
@@ -778,7 +779,7 @@ sub demunge_xlogline
   if (!defined(pos($line)) || pos($line) != length($line))
   {
     my $pos = defined(pos($line)) ? "Problem started at position " . pos($line) . "." : "Regex doesn't match.";
-    die "Unable to demunge_xlogline($line).\n$pos";
+    return undef;
   }
 
   return \%game;
