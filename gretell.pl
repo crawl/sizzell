@@ -42,6 +42,9 @@ my @stonefiles     = ('/var/lib/dgamelaunch/crawl-0.6/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones-sprint',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones-zotdef',
+                      '/var/lib/dgamelaunch/crawl-0.8/saves/milestones',
+                      '/var/lib/dgamelaunch/crawl-0.8/saves/milestones-sprint',
+                      '/var/lib/dgamelaunch/crawl-0.8/saves/milestones-zotdef',
                       '/var/lib/dgamelaunch/crawl-0.7/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-0.7/saves/milestones-sprint');
 
@@ -49,6 +52,9 @@ my @logfiles       = ('/var/lib/dgamelaunch/crawl-0.6/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile-sprint',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile-zotdef',
+                      '/var/lib/dgamelaunch/crawl-0.8/saves/logfile',
+                      '/var/lib/dgamelaunch/crawl-0.8/saves/logfile-sprint',
+                      '/var/lib/dgamelaunch/crawl-0.8/saves/logfile-zotdef',
                       '/var/lib/dgamelaunch/crawl-0.7/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-0.7/saves/logfile-sprint');
 
@@ -566,7 +572,10 @@ sub player_whereis_file($) {
 
   for my $where_path (@whereis_path) {
     my @where_dir = glob("$where_path/$realnick*/");
-    my @where_files = glob("$where_dir[0]/$realnick.where*");
+    my @where_files;
+    if (@where_dir) {
+      my @where_files = glob("$where_dir[0]/$realnick.where*");
+    }
     if (@where_files) {
       $where_file = $where_files[0];
       if (defined($final_where) && length($final_where) > 0) {
@@ -631,6 +640,7 @@ sub show_dump_file($$) {
       'crawl-rel' => '0.6',
       'crawl-0.6' => '0.6',
       'crawl-0.7' => '0.7',
+      'crawl-0.8' => '0.8',
       'crawl-anc' => 'ancient',
       'crawl-svn' => 'trunk' );
 
