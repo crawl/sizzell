@@ -571,10 +571,10 @@ sub player_whereis_file($) {
   my $final_where;
 
   for my $where_path (@whereis_path) {
-    my @where_dir = glob("$where_path/$realnick*/");
+    my @where_dir = glob("$where_path/$realnick");
     my @where_files;
     if (@where_dir) {
-      my @where_files = glob("$where_dir[0]/$realnick.where*");
+      @where_files = glob("$where_dir[0]/$realnick.where*");
     }
     if (@where_files) {
       $where_file = $where_files[0];
