@@ -30,16 +30,15 @@ use File::Glob qw/:globally :nocase/;
 my $nickname       = 'Gretell';
 my $ircname        = 'Gretell the Crawl Bot';
 # my $ircserver      = 'barjavel.freenode.net';
-my $ircserver      = 'kornbluth.freenode.net';
+# my $ircserver      = 'kornbluth.freenode.net';
 # my $ircserver      = 'bartol.freenode.net';
-# my $ircserver      = 'pratchett.freenode.net';
+my $ircserver      = 'pratchett.freenode.net';
 my $port           = 8001;
 my @CHANNELS       = ('##crawl', '##crawl-dev');
 my $ANNOUNCE_CHAN  = '##crawl';
 my $DEV_CHAN       = '##crawl-dev';
 
-my @stonefiles     = ('/var/lib/dgamelaunch/crawl-0.6/saves/milestones',
-                      '/var/lib/dgamelaunch/crawl-svn/saves/milestones',
+my @stonefiles     = ('/var/lib/dgamelaunch/crawl-svn/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones-sprint',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones-zotdef',
                       '/var/lib/dgamelaunch/crawl-0.8/saves/milestones',
@@ -48,8 +47,7 @@ my @stonefiles     = ('/var/lib/dgamelaunch/crawl-0.6/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-0.7/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-0.7/saves/milestones-sprint');
 
-my @logfiles       = ('/var/lib/dgamelaunch/crawl-0.6/saves/logfile',
-                      '/var/lib/dgamelaunch/crawl-svn/saves/logfile',
+my @logfiles       = ('/var/lib/dgamelaunch/crawl-svn/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile-sprint',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile-zotdef',
                       '/var/lib/dgamelaunch/crawl-0.8/saves/logfile',
@@ -571,7 +569,7 @@ sub player_whereis_file($) {
   my $final_where;
 
   for my $where_path (@whereis_path) {
-    my @where_dir = glob("$where_path/$realnick");
+    my @where_dir = glob("$where_path/$realnick*");
     my @where_files;
     if (@where_dir) {
       @where_files = glob("$where_dir[0]/$realnick.where*");
@@ -636,10 +634,7 @@ sub show_dump_file($$) {
     $whereis_file =~ m{/(crawl-[\w.]+)[^/]*/morgue/(\w+)/+\w+[.]where};
 
   my %GAME_WEB_MAPPINGS =
-    ( 'crawl-old' => '0.5',
-      'crawl-rel' => '0.6',
-      'crawl-0.6' => '0.6',
-      'crawl-0.7' => '0.7',
+    ( 'crawl-0.7' => '0.7',
       'crawl-0.8' => '0.8',
       'crawl-anc' => 'ancient',
       'crawl-svn' => 'trunk' );
