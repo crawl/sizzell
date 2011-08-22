@@ -636,6 +636,7 @@ sub show_dump_file($$) {
   my %GAME_WEB_MAPPINGS =
     ( 'crawl-0.7' => '0.7',
       'crawl-0.8' => '0.8',
+      'crawl-0.9' => '0.9',
       'crawl-anc' => 'ancient',
       'crawl-svn' => 'trunk' );
 
