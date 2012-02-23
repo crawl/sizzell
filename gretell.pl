@@ -639,6 +639,7 @@ sub show_dump_file($$) {
     ( 'crawl-0.7' => '0.7',
       'crawl-0.8' => '0.8',
       'crawl-0.9' => '0.9',
+      'crawl-0.10' => '0.10',
       'crawl-anc' => 'ancient',
       'crawl-svn' => 'trunk' );
 
