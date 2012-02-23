@@ -41,20 +41,28 @@ my $DEV_CHAN       = '##crawl-dev';
 my @stonefiles     = ('/var/lib/dgamelaunch/crawl-svn/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones-sprint',
                       '/var/lib/dgamelaunch/crawl-svn/saves/milestones-zotdef',
+                      '/var/lib/dgamelaunch/crawl-0.10/saves/milestones',
+                      '/var/lib/dgamelaunch/crawl-0.10/saves/milestones-sprint',
+                      '/var/lib/dgamelaunch/crawl-0.10/saves/milestones-zotdef',
+                      '/var/lib/dgamelaunch/crawl-0.9/saves/milestones',
+                      '/var/lib/dgamelaunch/crawl-0.9/saves/milestones-sprint',
+                      '/var/lib/dgamelaunch/crawl-0.9/saves/milestones-zotdef',
                       '/var/lib/dgamelaunch/crawl-0.8/saves/milestones',
                       '/var/lib/dgamelaunch/crawl-0.8/saves/milestones-sprint',
-                      '/var/lib/dgamelaunch/crawl-0.8/saves/milestones-zotdef',
-                      '/var/lib/dgamelaunch/crawl-0.7/saves/milestones',
-                      '/var/lib/dgamelaunch/crawl-0.7/saves/milestones-sprint');
+                      '/var/lib/dgamelaunch/crawl-0.8/saves/milestones-zotdef');
 
 my @logfiles       = ('/var/lib/dgamelaunch/crawl-svn/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile-sprint',
                       '/var/lib/dgamelaunch/crawl-svn/saves/logfile-zotdef',
+                      '/var/lib/dgamelaunch/crawl-0.10/saves/logfile',
+                      '/var/lib/dgamelaunch/crawl-0.10/saves/logfile-sprint',
+                      '/var/lib/dgamelaunch/crawl-0.10/saves/logfile-zotdef',
+                      '/var/lib/dgamelaunch/crawl-0.9/saves/logfile',
+                      '/var/lib/dgamelaunch/crawl-0.9/saves/logfile-sprint',
+                      '/var/lib/dgamelaunch/crawl-0.9/saves/logfile-zotdef',
                       '/var/lib/dgamelaunch/crawl-0.8/saves/logfile',
                       '/var/lib/dgamelaunch/crawl-0.8/saves/logfile-sprint',
-                      '/var/lib/dgamelaunch/crawl-0.8/saves/logfile-zotdef',
-                      '/var/lib/dgamelaunch/crawl-0.7/saves/logfile',
-                      '/var/lib/dgamelaunch/crawl-0.7/saves/logfile-sprint');
+                      '/var/lib/dgamelaunch/crawl-0.8/saves/logfile-zotdef');
 
 my @announcefiles  = ('/home/services/crawl/source/announcements.log');
 
