@@ -27,47 +27,42 @@ use POSIX qw(setsid); # For daemonization.
 use File::Find;
 use File::Glob qw/:globally :nocase/;
 
-my $nickname       = 'Gretell';
-my $ircname        = 'Gretell the Crawl Bot';
+my $nickname       = 'Sizzell';
+my $ircname        = 'Sizzell the Crawl Bot';
 # my $ircserver      = 'barjavel.freenode.net';
 # my $ircserver      = 'kornbluth.freenode.net';
 # my $ircserver      = 'bartol.freenode.net';
-my $ircserver      = 'pratchett.freenode.net';
+# my $ircserver      = 'pratchett.freenode.net';
+my $ircserver      = 'irc.freenode.net';
 my $port           = 8001;
 my @CHANNELS       = ('##crawl', '##crawl-dev');
 my $ANNOUNCE_CHAN  = '##crawl';
 my $DEV_CHAN       = '##crawl-dev';
 
-my @stonefiles     = ('/var/lib/dgamelaunch/crawl-svn/saves/milestones',
-                      '/var/lib/dgamelaunch/crawl-svn/saves/milestones-sprint',
-                      '/var/lib/dgamelaunch/crawl-svn/saves/milestones-zotdef',
-                      '/var/lib/dgamelaunch/crawl-0.10/saves/milestones',
-                      '/var/lib/dgamelaunch/crawl-0.10/saves/milestones-sprint',
-                      '/var/lib/dgamelaunch/crawl-0.10/saves/milestones-zotdef',
-                      '/var/lib/dgamelaunch/crawl-0.8/saves/milestones',
-                      '/var/lib/dgamelaunch/crawl-0.8/saves/milestones-sprint',
-                      '/var/lib/dgamelaunch/crawl-0.8/saves/milestones-zotdef');
+my @stonefiles     = ('/home/crawl/DGL/crawl-master/crawl-git/saves/milestones',
+                      '/home/crawl/DGL/crawl-master/crawl-git/saves/milestones-sprint',
+                      '/home/crawl/DGL/crawl-master/crawl-git/saves/milestones-zotdef',
+                      '/home/crawl/DGL/crawl-master/crawl-0.10/saves/milestones',
+                      '/home/crawl/DGL/crawl-master/crawl-0.10/saves/milestones-sprint',
+                      '/home/crawl/DGL/crawl-master/crawl-0.10/saves/milestones-zotdef');
 
-my @logfiles       = ('/var/lib/dgamelaunch/crawl-svn/saves/logfile',
-                      '/var/lib/dgamelaunch/crawl-svn/saves/logfile-sprint',
-                      '/var/lib/dgamelaunch/crawl-svn/saves/logfile-zotdef',
-                      '/var/lib/dgamelaunch/crawl-0.10/saves/logfile',
-                      '/var/lib/dgamelaunch/crawl-0.10/saves/logfile-sprint',
-                      '/var/lib/dgamelaunch/crawl-0.10/saves/logfile-zotdef',
-                      '/var/lib/dgamelaunch/crawl-0.8/saves/logfile',
-                      '/var/lib/dgamelaunch/crawl-0.8/saves/logfile-sprint',
-                      '/var/lib/dgamelaunch/crawl-0.8/saves/logfile-zotdef');
+my @logfiles       = ('/home/crawl/DGL/crawl-master/crawl-git/saves/logfile',
+                      '/home/crawl/DGL/crawl-master/crawl-git/saves/logfile-sprint',
+                      '/home/crawl/DGL/crawl-master/crawl-git/saves/logfile-zotdef',
+                      '/home/crawl/DGL/crawl-master/crawl-0.10/saves/logfile',
+                      '/home/crawl/DGL/crawl-master/crawl-0.10/saves/logfile-sprint',
+                      '/home/crawl/DGL/crawl-master/crawl-0.10/saves/logfile-zotdef');
 
-my @announcefiles  = ('/home/services/crawl/source/announcements.log');
+my @announcefiles  = ('/home/crawl/logs/announcements.log');
 
-my $DGL_INPROGRESS_DIR    = '/var/lib/dgamelaunch/dgldir/inprogress';
-my $DGL_TTYREC_DIR        = '/var/lib/dgamelaunch/dgldir/ttyrec';
+my $DGL_INPROGRESS_DIR    = '/home/crawl/DGL/dgldir/inprogress/';
+my $DGL_TTYREC_DIR        = '/home/crawl/DGL/dgldir/ttyrec/';
 my $INACTIVE_IDLE_CEILING_SECONDS = 300;
 
 my $MAX_LENGTH = 420;
 # The largest message to paginate in PM.
 my $MAX_PAGINATE_LENGTH = 2000;
-my $SERVER_BASE_URL = 'http://crawl.develz.org';
+my $SERVER_BASE_URL = 'http://dobrazupa.org';
 my $MORGUE_BASE_URL = "$SERVER_BASE_URL/morgues";
 
 my @BORING_UNIQUES = qw/Jessica Ijyb Blork Terence Edmund Psyche
@@ -80,20 +75,20 @@ my %GAME_TYPE_NAMES = (zot => 'ZotDef',
                        spr => 'Sprint');
 
 my %COMMANDS = (
-  '@whereis' => \&cmd_whereis,
-  '@dump' => \&cmd_dump,
-  '!cdo'     => \&cmd_players,
-  '@players' => \&cmd_players,
-  '@??' => \&cmd_trunk_monsterinfo,
-  '@?' => \&cmd_monsterinfo,
+  '%whereis' => \&cmd_whereis,
+  '%dump' => \&cmd_dump,
+  '!cszo'     => \&cmd_players,
+  '%players' => \&cmd_players,
+#  '%??' => \&cmd_trunk_monsterinfo,
+#  '%?' => \&cmd_monsterinfo,
 );
 
-## Daemonify. http://www.webreference.com/perl/tutorial/9/3.html
-#umask 0;
-#defined(my $pid = fork) or die "Unable to fork: $!";
-#exit if $pid;
-#setsid or die "Unable to start a new session: $!";
-## Done daemonifying.
+# Daemonify. http://www.webreference.com/perl/tutorial/9/3.html
+umask 0;
+defined(my $pid = fork) or die "Unable to fork: $!";
+exit if $pid;
+setsid or die "Unable to start a new session: $!";
+# Done daemonifying.
 
 my @stonehandles = open_handles(@stonefiles);
 my @loghandles = open_handles(@logfiles);
@@ -104,7 +99,7 @@ my $BOT = Gretell->new(nick     => $nickname,
                        port     => $port,
                        ircname  => $ircname,
                        channels => [ @CHANNELS ])
-  or die "Unable to instantiate Gretell\n";
+  or die "Unable to instantiate $nickname\n";
 
 $BOT->run();
 exit 0;
@@ -564,7 +559,7 @@ sub cmd_players {
 
 sub player_whereis_file($) {
   my $realnick = shift;
-  my @crawldirs      = glob('/var/lib/dgamelaunch/crawl-*');
+  my @crawldirs      = glob('/home/crawl/DGL/crawl-master/crawl-*');
   my @whereis_path   = map { "$_/morgue" } @crawldirs;
 
   my $where_file;
@@ -636,14 +631,10 @@ sub show_dump_file($$) {
     $whereis_file =~ m{/(crawl-[\w.]+)[^/]*/morgue/(\w+)/+\w+[.]where};
 
   my %GAME_WEB_MAPPINGS =
-    ( 'crawl-0.7' => '0.7',
-      'crawl-0.8' => '0.8',
-      'crawl-0.9' => '0.9',
-      'crawl-0.10' => '0.10',
-      'crawl-anc' => 'ancient',
-      'crawl-svn' => 'trunk' );
+    ( 'crawl-0.10' => '0.10',
+      'crawl-git' => 'trunk' );
 
-  my $dump_file = "/var/lib/dgamelaunch/$gamedir/morgue/$player/$player.txt";
+  my $dump_file = "/home/crawl/DGL/$gamedir/morgue/$player/$player.txt";
 
   unless (-f $dump_file) {
     post_message($m, "Can't find character dump for $player.");
