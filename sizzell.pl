@@ -54,6 +54,7 @@ my @logfiles       = ('/home/crawl/DGL/crawl-master/crawl-git/saves/logfile',
                       '/home/crawl/DGL/crawl-master/crawl-0.10/saves/logfile-zotdef');
 
 my @announcefiles  = ('/home/crawl/logs/announcements.log');
+my $pidfile        = '/home/crawl/run/sizzell.pid';
 
 my $DGL_INPROGRESS_DIR    = '/home/crawl/DGL/dgldir/inprogress/';
 my $DGL_TTYREC_DIR        = '/home/crawl/DGL/dgldir/ttyrec/';
@@ -83,12 +84,22 @@ my %COMMANDS = (
 #  '%?' => \&cmd_monsterinfo,
 );
 
-# Daemonify. http://www.webreference.com/perl/tutorial/9/3.html
-umask 0;
-defined(my $pid = fork) or die "Unable to fork: $!";
-exit if $pid;
-setsid or die "Unable to start a new session: $!";
-# Done daemonifying.
+if (defined $_[0] and $_[0] eq '-t') {
+  shift;
+} else {
+  # Daemonify. http://www.webreference.com/perl/tutorial/9/3.html
+  umask 0;
+  defined(my $pid = fork) or die "Unable to fork: $!";
+  exit if $pid;
+  setsid or die "Unable to start a new session: $!";
+  # Done daemonifying.
+  if (open my $pf, '>', $pidfile) {
+    print $pf "$$\n";
+    close $pf;
+  } else {
+    warn "Unable to open $pidfile: $!";
+  }
+}
 
 my @stonehandles = open_handles(@stonefiles);
 my @loghandles = open_handles(@logfiles);
@@ -101,7 +112,11 @@ my $BOT = Gretell->new(nick     => $nickname,
                        channels => [ @CHANNELS ])
   or die "Unable to instantiate $nickname\n";
 
-$BOT->run();
+eval {
+  $BOT->run();
+};
+unlink $pidfile or warn "Unable to delete pidfile: $!";
+die $@ if $@;
 exit 0;
 
 sub open_handles
