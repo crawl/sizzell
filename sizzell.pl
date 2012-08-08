@@ -126,9 +126,9 @@ sub open_handles
 
   for my $file (@files) {
     open my $handle, '<', $file or do {
-	  warn "Unable to open $file for reading: $!";
-	  next;
-	};
+      warn "Unable to open $file for reading: $!";
+      next;
+    };
     seek($handle, 0, 2); # EOF
     push @handles, [ $file, $handle, tell($handle) ];
   }
@@ -440,13 +440,11 @@ sub post_message($$) {
 sub process_command($$$$) {
   my ($m, $command, $nick, $verbatim) = @_;
 
-  if (substr($command, 0, 3) eq '@??')
-  {
+  if (substr($command, 0, 3) eq '@??') {
     $command = "@??";
   }
-  elsif (substr($command, 0, 2) eq '@?')
-  {
-	$command = "@?";
+  elsif (substr($command, 0, 2) eq '@?') {
+    $command = "@?";
   }
 
   my $proc = $COMMANDS{$command} or return;
@@ -736,20 +734,14 @@ sub pretty_print
 
   my $loc_string = "";
   my $place = xlog_place($game_ref);
-  if ($game_ref->{ltyp} ne 'D' || $place !~ ':')
-  {
+  if ($game_ref->{ltyp} ne 'D' || $place !~ ':') {
     $loc_string = " in $place";
   }
-  else
-  {
-    if ($game_ref->{br} eq 'blade' or $game_ref->{br} eq 'temple' or $game_ref->{br} eq 'hell')
-    {
-      $loc_string = " in $place";
-    }
-    else
-    {
-      $loc_string = " on $place";
-    }
+  elsif ($game_ref->{br} eq 'blade' or $game_ref->{br} eq 'temple' or $game_ref->{br} eq 'hell') {
+    $loc_string = " in $place";
+  }
+  else {
+    $loc_string = " on $place";
   }
   $loc_string = "" # For escapes of the dungeon, so it doesn't print the loc
     if $game_ref->{ktyp} eq 'winning' or $game_ref->{ktyp} eq 'leaving';
@@ -785,15 +777,13 @@ sub demunge_xlogline
   die "Unable to handle internal newlines." if $line =~ y/\n//;
   $line =~ s/::/\n\n/g;
 
-  while ($line =~ /\G(\w+)=([^:]*)(?::(?=[^:])|$)/cg)
-  {
+  while ($line =~ /\G(\w+)=([^:]*)(?::(?=[^:])|$)/cg) {
     my ($key, $value) = ($1, $2);
     $value =~ s/\n\n/:/g;
     $game{$key} = $value;
   }
 
-  if (!defined(pos($line)) || pos($line) != length($line))
-  {
+  if (!defined(pos($line)) || pos($line) != length($line)) {
     my $pos = defined(pos($line)) ? "Problem started at position " . pos($line) . "." : "Regex doesn't match.";
     return undef;
   }
@@ -806,8 +796,7 @@ sub serialize_time
   my $seconds = int shift;
   my $long = shift;
 
-  if (not $long)
-  {
+  if (not $long) {
     my $hours = int($seconds/3600);
     $seconds %= 3600;
     my $minutes = int($seconds/60);
