@@ -70,7 +70,7 @@ my $MAX_LENGTH = 420;
 # The largest message to paginate in PM.
 my $MAX_PAGINATE_LENGTH = 2000;
 my $SERVER_BASE_URL = 'http://dobrazupa.org';
-my $MORGUE_BASE_URL = "$SERVER_BASE_URL/morgues";
+my $MORGUE_BASE_URL = "$SERVER_BASE_URL/morgue";
 
 my @BORING_UNIQUES = qw/Jessica Ijyb Blork Terence Edmund Psyche
                         Joseph Josephine Harold Norbert Jozef
@@ -578,7 +578,7 @@ sub cmd_players {
 
 sub player_whereis_file($) {
   my $realnick = shift;
-  my @crawldirs      = glob('/home/crawl/DGL/crawl-master/crawl-*');
+  my @crawldirs      = glob('/home/crawl/DGL/dgldir/');
   my @whereis_path   = map { "$_/morgue" } @crawldirs;
 
   my $where_file;
@@ -646,27 +646,21 @@ sub cmd_whereis {
 sub show_dump_file($$) {
   my ($m, $whereis_file) = @_;
 
-  my ($gamedir, $player) =
-    $whereis_file =~ m{/(crawl-[\w.]+)[^/]*/morgue/(\w+)/+\w+[.]where};
+  my ($player) =
+    $whereis_file =~ m{/morgue/(\w+)/+\w+[.]where};
 
   my %GAME_WEB_MAPPINGS =
     ( 'crawl-0.10' => '0.10',
       'crawl-git' => 'trunk' );
 
-  my $dump_file = "/home/crawl/DGL/$gamedir/morgue/$player/$player.txt";
+  my $dump_file = "/home/crawl/DGL/dgldir/morgue/$player/$player.txt";
 
   unless (-f $dump_file) {
     post_message($m, "Can't find character dump for $player.");
     return;
   }
 
-  my $web_morgue_dir = $GAME_WEB_MAPPINGS{$gamedir};
-  unless ($web_morgue_dir) {
-    post_message($m, "Can't find URL base for character dump.");
-    return;
-  }
-
-  post_message($m, "$MORGUE_BASE_URL/$web_morgue_dir/$player/$player.txt");
+  post_message($m, "$MORGUE_BASE_URL/$player/$player.txt");
 }
 
 sub cmd_dump {
