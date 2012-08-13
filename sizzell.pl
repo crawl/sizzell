@@ -59,8 +59,8 @@ my @logfiles       = ('/home/crawl/DGL/crawl-master/crawl-git/saves/logfile',
                       '/home/crawl/DGL/crawl-master/crawl-0.10/saves/logfile-sprint',
                       '/home/crawl/DGL/crawl-master/crawl-0.10/saves/logfile-zotdef');
 
-my @announcefiles  = ('/home/crawl/logs/announcements.log');
-my $pidfile        = '/home/crawl/run/sizzell.pid';
+my @announcefiles  = ('/home/crawl-dev/logs/announcements.log');
+my $pidfile        = '/home/crawl-dev/run/sizzell.pid';
 
 my $DGL_INPROGRESS_DIR    = '/home/crawl/DGL/dgldir/inprogress/';
 my $DGL_TTYREC_DIR        = '/home/crawl/DGL/dgldir/ttyrec/';
