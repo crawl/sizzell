@@ -734,7 +734,7 @@ sub pretty_print
 
   my $loc_string = "";
   my $place = xlog_place($game_ref);
-  if ($game_ref->{ltyp} ne 'D' || $place !~ ':') {
+  if (exists $game_ref->{ltyp} && $game_ref->{ltyp} ne 'D' || $place !~ ':') {
     $loc_string = " in $place";
   }
   elsif ($game_ref->{br} eq 'blade' or $game_ref->{br} eq 'temple' or $game_ref->{br} eq 'hell') {
