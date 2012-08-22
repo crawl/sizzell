@@ -216,7 +216,7 @@ sub xlog_place
   my $g = shift;
 
   my $game_type_place_qualifier = game_type_name($g);
-  my $place = $$g{place};
+  my $place = $$g{oplace} || $$g{place};
   if ($game_type_place_qualifier) {
     $place = "$place ($game_type_place_qualifier)";
   }
