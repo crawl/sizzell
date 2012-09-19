@@ -38,6 +38,7 @@ my $port           = 8001;
 my @CHANNELS       = ('##crawl', '##crawl-dev');
 my $ANNOUNCE_CHAN  = '##crawl';
 my $DEV_CHAN       = '##crawl-dev';
+my @badusers;
 
 my @stonefiles     = ('/home/crawl/DGL/crawl-master/crawl-git/saves/milestones',
                       '/home/crawl/DGL/crawl-master/crawl-git/saves/milestones-sprint',
@@ -61,6 +62,7 @@ my @logfiles       = ('/home/crawl/DGL/crawl-master/crawl-git/saves/logfile',
 
 my @announcefiles  = ('/home/crawl-dev/logs/announcements.log');
 my $pidfile        = '/home/crawl-dev/run/sizzell.pid';
+my $baduserfile    = '/home/crawl-dev/sizzell/.badusers';
 
 my $DGL_INPROGRESS_DIR    = '/home/crawl/DGL/dgldir/inprogress/';
 my $DGL_TTYREC_DIR        = '/home/crawl/DGL/dgldir/ttyrec/';
@@ -110,6 +112,16 @@ if (defined $_[0] and $_[0] eq '-t') {
 my @stonehandles = open_handles(@stonefiles);
 my @loghandles = open_handles(@logfiles);
 my @announcehandles = open_handles(@announcefiles);
+
+if (open my $baduserhandle, "<", $baduserfile) {
+  while (<$baduserhandle>) {
+    chomp;
+    push @badusers, qr/$_/i;
+  }
+  close $baduserhandle;
+} else {
+  warn "Cannot open $baduserfile: $!";
+}
 
 my $BOT = Gretell->new(nick     => $nickname,
                        server   => $ircserver,
@@ -177,9 +189,16 @@ sub game_is_zotdef($) {
   (game_type(shift) || '') eq 'zot'
 }
 
+sub user_is_bad($) {
+  my $name = shift;
+  scalar grep { $name =~ /^$_$/ } @badusers;
+}
+
 sub newsworthy
 {
   my $g = shift;
+
+  return 0 if user_is_bad($g->{name});
 
   # Milestone type, empty if this is not a milestone.
   my $type = $$g{type} || '';
