@@ -66,6 +66,7 @@ my $baduserfile    = '/home/crawl-dev/sizzell/.badusers';
 
 my $DGL_INPROGRESS_DIR    = '/home/crawl/DGL/dgldir/inprogress/';
 my $DGL_TTYREC_DIR        = '/home/crawl/DGL/dgldir/ttyrec/';
+my $DGL_BINARY_DIR        = '/home/crawl/DGL/usr/games/';
 my $INACTIVE_IDLE_CEILING_SECONDS = 300;
 
 my $MAX_LENGTH = 420;
@@ -88,6 +89,7 @@ my %COMMANDS = (
   '%dump' => \&cmd_dump,
   '!cszo'     => \&cmd_players,
   '%players' => \&cmd_players,
+  '%version' => \&cmd_version,
 #  '%??' => \&cmd_trunk_monsterinfo,
 #  '%?' => \&cmd_monsterinfo,
 );
@@ -503,6 +505,35 @@ sub cmd_monsterinfo {
   my $monster_name = substr($verbatim, 2);
   my $monster_info = `monster \Q$monster_name\E`;
   post_message($m, $monster_info);
+}
+
+sub get_crawl_version($) {
+  my $branch = shift;
+  $branch = "latest" if !defined($branch) or $branch =~ /^(?:git|trunk)$/;
+  $branch =~ /^(?:0.[0-9]+|latest)$/ or return "bad branch";
+
+  open my $vercmd, "-|", "$DGL_BINARY_DIR/crawl-$branch", "-version";
+  while (<$vercmd>) {
+    chomp;
+    if (/Crawl version (.*)/) {
+      close $vercmd;
+      return $1;
+    }
+  }
+  close $vercmd;
+  return "not found"
+}
+
+sub cmd_version {
+  my ($m, $nick, $verbatim) = @_;
+  my @answers = ();
+
+  for my $branch (qw(trunk 0.11 0.10)) {
+    my $version = get_crawl_version($branch);
+    push @answers, "$branch: $version";
+  }
+
+  post_message($m, join(";  ", @answers));
 }
 
 sub ttyrec_idle_time_seconds($) {
