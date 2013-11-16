@@ -540,7 +540,7 @@ sub cmd_version {
   my ($m, $nick, $verbatim) = @_;
   my @answers = ();
 
-  for my $branch (qw(trunk 0.11 0.10)) {
+  for my $branch (qw(trunk 0.13 0.12 0.11 0.10)) {
     my $version = get_crawl_version($branch);
     push @answers, "$branch: $version";
   }
