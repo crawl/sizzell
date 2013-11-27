@@ -234,13 +234,8 @@ sub newsworthy
     if milestone_is_uniq($g) && grep(index($$g{milestone}, $_) != -1,
                                      @BORING_UNIQUES);
 
-  # Suppress all Sprint/ZotDef events <300 turns.
-  return 0 if (game_type($g) && ($$g{ktyp} || '') ne 'winning'
-               && $$g{turn} < 300);
-
-  return 0 if (game_is_sprint($g) && $type eq 'uniq'
-               && (grep {index($g->{milestone}, $_) > -1}
-                   qw/Ijyb Sigmund Sonja/));
+  # Suppress all Sprint/ZotDef events other than wins.
+  return 0 if (game_type($g) && ($$g{ktyp} || '') ne 'winning');
 
   return 0
     if (!$$g{milestone}
