@@ -87,11 +87,13 @@ my $MAX_PAGINATE_LENGTH = 2000;
 my $SERVER_BASE_URL = 'http://dobrazupa.org';
 my $MORGUE_BASE_URL = "$SERVER_BASE_URL/morgue";
 
-my @BORING_UNIQUES = qw/Jessica Ijyb Blork Terence Edmund Psyche
-                        Joseph Josephine Harold Norbert Jozef
-                        Maud Duane Grum Gastronok Dowan Duvessa
-                        Pikel Menkaure Purgy Maurice Yiuf
-                        Urug Snorg Eustachio Ribbit Nergalle/;
+# Uniques that generate in D and/or Lair, excluding Sigmund and Rupert
+my @BORING_UNIQUES = qw/Ijyb Jessica Terence Yiuf Blork Eustachio
+                        Edmund Dowan Duvessa Pikel Grinder
+                        Menkaure Ribbit Joseph Grum Psyche
+                        Maurice Erica Fannar Harold Erolcha
+                        Nergalle Urug Josephine Gastronok Sonja
+                        Nessos Maud Purgy Snorg/;
 
 my %GAME_TYPE_NAMES = (zot => 'ZotDef',
                        spr => 'Sprint');
