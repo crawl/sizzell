@@ -245,10 +245,10 @@ sub newsworthy
 
   return 0
     if (!$$g{milestone}
-        && ($g->{sc} <= 2000
+        && ($g->{sc} <= 1000
             && ($g->{ktyp} eq 'quitting'
                 || $g->{ktyp} eq 'leaving'
-                || $g->{turn} <= 500)));
+                || $g->{turn} <= 3000)));
 
   return 1;
 }
