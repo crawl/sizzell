@@ -223,7 +223,11 @@ sub newsworthy
 
   return 0
     if $br_enter
-      && grep($place_branch eq $_, qw/Temple Lair Hive D Orc/);
+      && grep($place_branch eq $_, qw/Temple Lair D Orc/);
+
+  return 0
+    if ($type eq 'br.end')
+      && grep($place_branch eq $_, qw/Lair Orc/);
 
   if ($type eq 'zig') {
     my ($depth) = ($$g{milestone} || '') =~ /reached level (\d+)/;
