@@ -86,6 +86,7 @@ my $MAX_LENGTH = 420;
 my $MAX_PAGINATE_LENGTH = 2000;
 my $SERVER_BASE_URL = 'http://dobrazupa.org';
 my $MORGUE_BASE_URL = "$SERVER_BASE_URL/morgue";
+my $WEBTILES_BASE_URL = 'https://crawl.s-z.org/#watch-';
 
 # Uniques that generate in D and/or Lair, excluding Sigmund and Rupert
 my @BORING_UNIQUES = qw/Ijyb Jessica Terence Yiuf Blork Eustachio
@@ -104,6 +105,8 @@ my %COMMANDS = (
   '!cszo'     => \&cmd_players,
   '%players' => \&cmd_players,
   '%version' => \&cmd_version,
+  '%watch' => \&cmd_watch,
+
 #  '%??' => \&cmd_trunk_monsterinfo,
 #  '%?' => \&cmd_monsterinfo,
 );
@@ -703,6 +706,19 @@ sub cmd_whereis {
     return;
   }
   show_where_information($m, $where);
+}
+
+sub cmd_watch {
+  my ($m, $nick, $verbatim) = @_;
+
+  # Get the nick to act on.
+  my $realnick = find_named_nick($nick, $verbatim);
+  my $watch = player_whereis_hash($realnick);
+  unless ($watch) {
+    post_message($m, "No current CBRO game for $realnick.");
+    return;
+  }
+  post_message($m, "Watch $realnick at: " . $WEBTILES_BASE_URL . $realnick);
 }
 
 sub show_dump_file($$) {
