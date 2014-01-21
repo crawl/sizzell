@@ -716,7 +716,7 @@ sub cmd_watch {
   my $watch = player_active($realnick);
 
   unless ($watch) {
-    post_message($m, "No current CBRO game for $realnick.");
+    post_message($m, "No current CSZO game for $realnick.");
     return;
   }
   post_message($m, "Watch $realnick at: " . $WEBTILES_BASE_URL . $realnick);
