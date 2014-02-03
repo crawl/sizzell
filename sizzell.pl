@@ -94,7 +94,7 @@ my @BORING_UNIQUES = qw/Ijyb Jessica Terence Yiuf Blork Eustachio
                         Menkaure Ribbit Joseph Grum Psyche
                         Maurice Erica Fannar Harold Erolcha
                         Nergalle Urug Josephine Gastronok Sonja
-                        Nessos Maud Purgy Snorg/;
+                        Nessos Maud Purgy Snorg Natasha Asterion/;
 
 my %GAME_TYPE_NAMES = (zot => 'ZotDef',
                        spr => 'Sprint');
