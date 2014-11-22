@@ -111,16 +111,17 @@ my @BORING_UNIQUES = qw/Ijyb Jessica Terence Yiuf Blork Eustachio
 my %GAME_TYPE_NAMES = (zot => 'ZotDef',
                        spr => 'Sprint');
 
+my $PREFIX = '%';
 my %COMMANDS = (
-  '%whereis' => \&cmd_whereis,
-  '%dump' => \&cmd_dump,
-  '!cszo'     => \&cmd_players,
-  '%players' => \&cmd_players,
-  '%version' => \&cmd_version,
-  '%watch' => \&cmd_watch,
+  "${PREFIX}whereis" => \&cmd_whereis,
+  "${PREFIX}dump"    => \&cmd_dump,
+  '!cszo'            => \&cmd_players,
+  "${PREFIX}players" => \&cmd_players,
+  "${PREFIX}version" => \&cmd_version,
+  "${PREFIX}watch"   => \&cmd_watch,
 
-#  '%??' => \&cmd_trunk_monsterinfo,
-#  '%?' => \&cmd_monsterinfo,
+#  "${PREFIX}??" => \&cmd_trunk_monsterinfo,
+#  "${PREFIX}?" => \&cmd_monsterinfo,
 );
 
 if (defined $_[0] and $_[0] eq '-t') {
