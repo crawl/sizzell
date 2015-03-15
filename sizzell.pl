@@ -105,8 +105,8 @@ my $MORGUE_BASE_URL = "$SERVER_BASE_URL/morgue";
 my $WEBTILES_BASE_URL = 'https://crawl.s-z.org/#watch-';
 
 # Uniques that generate in D and/or Lair, excluding Sigmund and Rupert
-my @BORING_UNIQUES = qw/Ijyb Jessica Terence Yiuf Blork Eustachio
-                        Edmund Dowan Duvessa Pikel Grinder
+my @BORING_UNIQUES = qw/Ijyb Jessica Terence Robin Yiuf Blork Natasha
+                        Eustachio Edmund Dowan Duvessa Pikel Grinder
                         Menkaure Ribbit Joseph Grum Psyche
                         Maurice Erica Fannar Harold Erolcha
                         Nergalle Urug Josephine Gastronok Sonja
