@@ -104,14 +104,6 @@ my $SERVER_BASE_URL = 'http://dobrazupa.org';
 my $MORGUE_BASE_URL = "$SERVER_BASE_URL/morgue";
 my $WEBTILES_BASE_URL = 'https://crawl.s-z.org/#watch-';
 
-# Uniques that generate in D and/or Lair, excluding Sigmund and Rupert
-my @BORING_UNIQUES = qw/Ijyb Jessica Terence Robin Yiuf Blork Natasha
-                        Eustachio Edmund Dowan Duvessa Pikel Grinder
-                        Menkaure Ribbit Joseph Grum Psyche
-                        Maurice Erica Fannar Harold Erolcha
-                        Nergalle Urug Josephine Gastronok Sonja
-                        Nessos Maud Purgy Snorg Natasha Asterion/;
-
 my %GAME_TYPE_NAMES = (zot => 'ZotDef',
                        spr => 'Sprint');
 
@@ -205,6 +197,12 @@ sub milestone_is_uniq($) {
   return grep($type, qw/uniq unique/);
 }
 
+sub milestone_is_ghost($) {
+  my $g = shift;
+  my $type = $$g{type} || '';
+  return grep($type, qw/ghost/);
+}
+
 sub game_type($) {
   my $g = shift;
   my ($type) = ($$g{lv} || '') =~ /-(.*)/;
@@ -238,38 +236,45 @@ sub newsworthy
 
   # Milestone type, empty if this is not a milestone.
   my $type = $$g{type} || '';
-  my $br_enter = $type eq 'enter' || $type eq 'br.enter';
   my $place_branch = game_place_branch($g);
 
-  return 0 if grep($_ eq $type, 'sacrifice', 'crash', 'monstrous', 'death',
-                                'br.mid', 'br.exit', 'begin', 'uniq.seen');
+  # Only announce certain milestone types
+  return 0 if !grep($_ eq $type, 'uniq', 'uniq.ban', 'uniq.pac', 'uniq.ens',
+                                 'uniq.slime', 'br.enter', 'br.end',
+                                 'rune', 'zig', 'zig.enter', 'zig.exit',
+                                 'abyss.enter', 'abyss.exit', 'orb',
+                                 'ghost', 'ghost.ban', 'ghost.pac', '');
 
   return 0
-    if $br_enter
-      && grep($place_branch eq $_, qw/Temple Lair D Orc/);
+    if ($type eq 'br.enter')
+      && !grep($place_branch eq $_, qw/Zot Tomb Hell Coc Geh Dis Tar Pan
+                                       WizLab/);
 
   return 0
     if ($type eq 'br.end')
-      && grep($place_branch eq $_, qw/Lair Orc/);
+      && !grep($place_branch eq $_, qw/Zot Tomb Coc Geh Dis Tar Vaults Shoals
+                                       Snake Spider Swamp Slime Abyss Elf/);
 
   if ($type eq 'zig') {
     my ($depth) = ($$g{milestone} || '') =~ /reached level (\d+)/;
-    return 0 if $depth < 18 && $$g{xl} >= 27;
+    return 0 if $depth < 20;
   }
 
   return 0
-    if milestone_is_uniq($g) && grep(index($$g{milestone}, $_) != -1,
-                                     @BORING_UNIQUES);
+    if milestone_is_uniq($g)
+      && !grep($place_branch eq $_, qw/Abyss Zot Coc Geh Dis Tar Tomb Hell
+                                       Slime Pan/);
+
+  return 0
+    if milestone_is_ghost($g)
+      && !grep($place_branch eq $_, qw/Abyss Zot Coc Geh Dis Tar Tomb Hell
+                                       Slime Pan Depths Vaults Crypt/);
 
   # Suppress all Sprint/ZotDef events other than wins.
   return 0 if (game_type($g) && ($$g{ktyp} || '') ne 'winning');
 
-  return 0
-    if (!$$g{milestone}
-        && ($g->{sc} <= 1000
-            && ($g->{ktyp} eq 'quitting'
-                || $g->{ktyp} eq 'leaving'
-                || $g->{turn} <= 3000)));
+  # Suppress deaths with less than 5000 score.
+  return 0 if (!$$g{milestone} && $g->{sc} < 5000);
 
   return 1;
 }
