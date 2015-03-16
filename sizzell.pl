@@ -194,13 +194,13 @@ sub game_place_branch($)
 sub milestone_is_uniq($) {
   my $g = shift;
   my $type = $$g{type} || '';
-  return grep($type, qw/uniq unique/);
+  return grep($type eq $_, qw/uniq uniq.ban uniq.pac uniq.ens uniq.slime/);
 }
 
 sub milestone_is_ghost($) {
   my $g = shift;
   my $type = $$g{type} || '';
-  return grep($type, qw/ghost/);
+  return grep($type eq $_, qw/ghost ghost.ban ghost.pac/);
 }
 
 sub game_type($) {
