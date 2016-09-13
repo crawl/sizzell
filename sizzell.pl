@@ -287,7 +287,7 @@ sub devworthy
 {
   my $g = shift;
   my $type = $$g{type} || '';
-  return $type eq 'crash';
+  return $type eq 'crash' && !game_is_zotdef($g);
 }
 
 # Given an xlogfile hash, returns the place where the event occurred.
